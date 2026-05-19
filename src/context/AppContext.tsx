@@ -1,0 +1,242 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { db } from '../services/db';
+import { Student, Teacher, Candidate, Vote, ElectionState, ActivityLog, HouseColor, SchoolClass } from '../types';
+import toast from 'react-hot-toast';
+
+interface StudentSession {
+  id?: string;
+  name: string;
+  className: string;
+  house: HouseColor;
+}
+
+interface AppContextType {
+  // Data
+  candidates: Candidate[];
+  students: Student[];
+  teachers: Teacher[];
+  classes: SchoolClass[];
+  votes: Vote[];
+  logs: ActivityLog[];
+  electionState: ElectionState;
+
+  // Sessions
+  currentStudent: StudentSession | null;
+  isAdminLoggedIn: boolean;
+  selectedHouse: HouseColor | null;
+
+  // UI States
+  isFullscreen: boolean;
+  isDarkMode: boolean;
+  voiceAnnouncements: boolean;
+
+  // Methods
+  loginStudent: (session: StudentSession) => boolean;
+  logoutStudent: () => void;
+  loginAdmin: (pin: string) => boolean;
+  logoutAdmin: () => void;
+  setSelectedHouse: (house: HouseColor | null) => void;
+  toggleFullscreen: () => void;
+  toggleDarkMode: () => void;
+  toggleVoiceAnnouncements: () => void;
+  castStudentVote: (votedCandidates: { [position: string]: string }) => { success: boolean; message: string };
+  refreshData: () => void;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [classes, setClasses] = useState<SchoolClass[]>([]);
+  const [votes, setVotes] = useState<Vote[]>([]);
+  const [logs, setLogs] = useState<ActivityLog[]>([]);
+  const [electionState, setElectionState] = useState<ElectionState>(db.getElectionState());
+
+  const [currentStudent, setCurrentStudent] = useState<StudentSession | null>(() => {
+    const saved = sessionStorage.getItem('currentStudentSession');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
+    return sessionStorage.getItem('isAdminLoggedIn') === 'true';
+  });
+
+  const [selectedHouse, setSelectedHouse] = useState<HouseColor | null>(() => {
+    return currentStudent ? currentStudent.house : null;
+  });
+
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [voiceAnnouncements, setVoiceAnnouncements] = useState<boolean>(true);
+
+  const refreshData = () => {
+    setCandidates(db.getCandidates());
+    setStudents(db.getStudents());
+    setTeachers(db.getTeachers());
+    setClasses(db.getClasses());
+    setVotes(db.getVotes());
+    setLogs(db.getLogs());
+    setElectionState(db.getElectionState());
+  };
+
+  useEffect(() => {
+    refreshData();
+    const unsubscribe = db.subscribe(() => {
+      refreshData();
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Update house theme when current student changes
+  useEffect(() => {
+    if (currentStudent) {
+      setSelectedHouse(currentStudent.house);
+    }
+  }, [currentStudent]);
+
+  const loginStudent = (session: StudentSession): boolean => {
+    if (electionState.status !== 'active') {
+      toast.error('Election is currently not active!');
+      return false;
+    }
+
+    // Verify if student already voted
+    const student = students.find(s => s.id === session.id || s.name.toLowerCase() === session.name.toLowerCase());
+    if (student && student.hasVoted) {
+      toast.error('You have already submitted your vote! Multiple voting is strictly prohibited.');
+      db.addLog('Security Alert: Duplicate Login Attempt', `Student ${session.name} (${session.className}) attempted to login again after voting.`, 'danger');
+      return false;
+    }
+
+    setCurrentStudent(session);
+    setSelectedHouse(session.house);
+    sessionStorage.setItem('currentStudentSession', JSON.stringify(session));
+    toast.success(`Welcome, ${session.name}!`);
+
+    if (voiceAnnouncements) {
+      const speech = new SpeechSynthesisUtterance(`Welcome ${session.name} of ${session.house} House. Please cast your vote.`);
+      window.speechSynthesis.speak(speech);
+    }
+
+    return true;
+  };
+
+  const logoutStudent = () => {
+    setCurrentStudent(null);
+    setSelectedHouse(null);
+    sessionStorage.removeItem('currentStudentSession');
+  };
+
+  const loginAdmin = (pin: string): boolean => {
+    // Simple secure PIN for demo/school lab environment
+    if (pin === '2083' || pin === 'admin') {
+      setIsAdminLoggedIn(true);
+      sessionStorage.setItem('isAdminLoggedIn', 'true');
+      toast.success('Admin authenticated successfully');
+      db.addLog('Admin Login', 'Admin dashboard accessed', 'info');
+      return true;
+    } else {
+      toast.error('Invalid Admin PIN');
+      db.addLog('Failed Admin Login Attempt', 'Incorrect PIN entered', 'warning');
+      return false;
+    }
+  };
+
+  const logoutAdmin = () => {
+    setIsAdminLoggedIn(false);
+    sessionStorage.removeItem('isAdminLoggedIn');
+    toast.success('Admin logged out');
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch(err => {
+        toast.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().then(() => {
+          setIsFullscreen(false);
+        });
+      }
+    }
+  };
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
+  const toggleVoiceAnnouncements = () => {
+    setVoiceAnnouncements(!voiceAnnouncements);
+    toast.success(`Voice announcements ${!voiceAnnouncements ? 'enabled' : 'disabled'}`);
+  };
+
+  const castStudentVote = (votedCandidates: { [position: string]: string }) => {
+    if (!currentStudent) {
+      return { success: false, message: 'No active student session found.' };
+    }
+
+    const result = db.castVote(
+      currentStudent.id || '',
+      currentStudent.name,
+      currentStudent.className,
+      currentStudent.house,
+      votedCandidates
+    );
+
+    if (result.success) {
+      if (voiceAnnouncements) {
+        const speech = new SpeechSynthesisUtterance('Your vote has been successfully submitted. Thank you.');
+        window.speechSynthesis.speak(speech);
+      }
+    }
+
+    return result;
+  };
+
+  return (
+    <AppContext.Provider
+      value={{
+        candidates,
+        students,
+        teachers,
+        classes,
+        votes,
+        logs,
+        electionState,
+        currentStudent,
+        isAdminLoggedIn,
+        selectedHouse,
+        isFullscreen,
+        isDarkMode,
+        voiceAnnouncements,
+        loginStudent,
+        logoutStudent,
+        loginAdmin,
+        logoutAdmin,
+        setSelectedHouse,
+        toggleFullscreen,
+        toggleDarkMode,
+        toggleVoiceAnnouncements,
+        castStudentVote,
+        refreshData
+      }}
+    >
+      <div className={`${isDarkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} min-h-screen transition-colors duration-300`}>
+        {children}
+      </div>
+    </AppContext.Provider>
+  );
+};
+
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('useApp must be used within an AppProvider');
+  }
+  return context;
+};
