@@ -21,7 +21,7 @@ export interface Teacher {
 export interface Candidate {
   id: string;
   name: string;
-  position: 'Head Boy' | 'Head Girl' | 'Sports Captain' | 'Discipline Captain';
+  position: string; // Allow custom positions
   house: HouseColor;
   slogan: string;
   symbol: string; // Emoji or icon name or short text

@@ -45,6 +45,7 @@ export const AdminDashboard: React.FC = () => {
   const [editingCandidateId, setEditingCandidateId] = useState<string | null>(null);
   const [candName, setCandName] = useState('');
   const [candPos, setCandPos] = useState<Candidate['position']>('Head Boy');
+  const [candCustomPos, setCandCustomPos] = useState('');
   const [candHouse, setCandHouse] = useState<HouseColor>('Blue');
   const [candSlogan, setCandSlogan] = useState('');
   const [candSymbol, setCandSymbol] = useState('');
@@ -58,20 +59,21 @@ export const AdminDashboard: React.FC = () => {
 
   const handleOpenEditCandidate = (c: Candidate) => {
     setEditingCandidateId(c.id);
-    setCandName(c.name); setCandPos(c.position); setCandHouse(c.house); setCandSlogan(c.slogan); setCandSymbol(c.symbol); setCandPhoto(c.photoUrl);
+    setCandName(c.name); setCandPos(c.position); setCandCustomPos(''); setCandHouse(c.house); setCandSlogan(c.slogan); setCandSymbol(c.symbol); setCandPhoto(c.photoUrl);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSaveCandidate = (e: React.FormEvent) => {
     e.preventDefault();
+    const finalPos = candCustomPos.trim() !== '' ? candCustomPos.trim() as Candidate['position'] : candPos;
     if (editingCandidateId) {
-      db.updateCandidate(editingCandidateId, { name: candName, position: candPos, house: candHouse, slogan: candSlogan, symbol: candSymbol, photoUrl: candPhoto });
+      db.updateCandidate(editingCandidateId, { name: candName, position: finalPos, house: candHouse, slogan: candSlogan, symbol: candSymbol, photoUrl: candPhoto });
     } else {
-      db.addCandidate({ name: candName, position: candPos, house: candHouse, slogan: candSlogan, symbol: candSymbol, photoUrl: candPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400' });
+      db.addCandidate({ name: candName, position: finalPos, house: candHouse, slogan: candSlogan, symbol: candSymbol, photoUrl: candPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400' });
     }
     refreshData();
     setEditingCandidateId(null);
-    setCandName(''); setCandPos('Head Boy'); setCandHouse('Blue'); setCandSlogan(''); setCandSymbol('⭐'); setCandPhoto('');
+    setCandName(''); setCandPos('Head Boy'); setCandCustomPos(''); setCandHouse('Blue'); setCandSlogan(''); setCandSymbol('⭐'); setCandPhoto('');
   };
 
   const handleDeleteCandidate = (id: string) => {
@@ -494,9 +496,14 @@ export const AdminDashboard: React.FC = () => {
                   <input type="text" value={candName} onChange={e => setCandName(e.target.value)} placeholder="Full Name" className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner" required />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Position</label>
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Candidate Position (optional custom)</label>
+                  <input type="text" value={candCustomPos} onChange={e => setCandCustomPos(e.target.value)} placeholder="e.g., Vice President" className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner" />
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 mt-4">Position</label>
                   <select value={candPos} onChange={e => setCandPos(e.target.value as any)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner">
-                    <option value="Head Boy">Head Boy</option><option value="Head Girl">Head Girl</option><option value="Sports Captain">Sports Captain</option><option value="Discipline Captain">Discipline Captain</option>
+                    <option value="Head Boy">Head Boy</option>
+                    <option value="Head Girl">Head Girl</option>
+                    <option value="Sports Captain">Sports Captain</option>
+                    <option value="Discipline Captain">Discipline Captain</option>
                   </select>
                 </div>
                 <div>
@@ -514,8 +521,18 @@ export const AdminDashboard: React.FC = () => {
                   <input type="text" value={candSlogan} onChange={e => setCandSlogan(e.target.value)} placeholder="Short inspiring slogan" className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner" required />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Photo URL</label>
-                  <input type="url" value={candPhoto} onChange={e => setCandPhoto(e.target.value)} placeholder="https://..." className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner" />
+                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Candidate Photo</label>
+                  <input type="file" accept="image/*" onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 10 * 1024 * 1024) {
+                      alert('Image size exceeds 10MB limit. Please choose a smaller file.');
+                      e.target.value = '';
+                      return;
+                    }
+                    const url = URL.createObjectURL(file);
+                    setCandPhoto(url);
+                  }} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white" />
                 </div>
                 <div className="md:col-span-3 flex justify-end gap-3 pt-2">
                   <button type="submit" className="px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-indigo-600/30 transition-all border border-indigo-400/30 flex items-center gap-2">
