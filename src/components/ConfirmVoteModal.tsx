@@ -79,21 +79,21 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
               const candidate = candidates.find(c => c.id === candidateId);
 
               return (
-                <div key={pos} className="flex items-center justify-between bg-slate-800/40 p-3.5 rounded-2xl border border-slate-700/60">
+                <div key={pos} className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-800/40 p-3.5 rounded-2xl border border-slate-700/60 gap-2 sm:gap-4">
                   <div className="flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                    <span className="text-xs md:text-sm font-semibold text-slate-300 w-32 truncate">{pos}:</span>
+                    <span className="text-xs md:text-sm font-semibold text-slate-300">{pos}:</span>
                   </div>
                   {candidate ? (
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{candidate.symbol}</span>
-                      <span className="text-sm font-bold text-white">{candidate.name}</span>
-                      <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-lg border border-indigo-500/30 hidden sm:inline">
+                    <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                      <span className="text-lg">{candidate.symbol}</span>
+                      <span className="text-sm font-bold text-white max-w-[160px] sm:max-w-[200px] truncate">{candidate.name}</span>
+                      <span className={`text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-lg border border-indigo-500/30 hidden sm:inline`}>
                         {candidate.house}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-xs font-medium text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20">
+                    <span className="text-xs font-medium text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20 self-end sm:self-auto">
                       No Candidate Selected
                     </span>
                   )}

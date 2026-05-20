@@ -80,16 +80,21 @@ const INITIAL_LOGS: ActivityLog[] = [
 
 class DatabaseService {
   private listeners: (() => void)[] = [];
+  private cachedData: DatabaseSchema | null = null;
 
   constructor() {
     window.addEventListener('storage', (e) => {
       if (e.key === STORAGE_KEY) {
+        this.cachedData = null; // Invalidate cache on external storage updates
         this.notifyListeners();
       }
     });
   }
 
   private getData(): DatabaseSchema {
+    if (this.cachedData) {
+      return this.cachedData;
+    }
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) {
       const initialData: DatabaseSchema = {
@@ -102,12 +107,15 @@ class DatabaseService {
         logs: INITIAL_LOGS
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+      this.cachedData = initialData;
       return initialData;
     }
-    return JSON.parse(data);
+    this.cachedData = JSON.parse(data);
+    return this.cachedData!;
   }
 
   private saveData(data: DatabaseSchema) {
+    this.cachedData = data;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     this.notifyListeners();
   }
@@ -125,7 +133,7 @@ class DatabaseService {
 
   // --- ELECTION STATE ---
   public getElectionState(): ElectionState {
-    return this.getData().electionState;
+    return { ...this.getData().electionState };
   }
 
   public updateElectionState(newState: Partial<ElectionState>) {
@@ -137,7 +145,7 @@ class DatabaseService {
 
   // --- CANDIDATES ---
   public getCandidates(): Candidate[] {
-    return this.getData().candidates;
+    return [...this.getData().candidates];
   }
 
   public getCandidatesByHouse(house: HouseColor): Candidate[] {
@@ -175,7 +183,7 @@ class DatabaseService {
 
   // --- STUDENTS ---
   public getStudents(): Student[] {
-    return this.getData().students;
+    return [...this.getData().students];
   }
 
   public addStudent(student: Omit<Student, 'id' | 'hasVoted'>) {
@@ -204,7 +212,7 @@ class DatabaseService {
 
   // --- TEACHERS ---
   public getTeachers(): Teacher[] {
-    return this.getData().teachers;
+    return [...this.getData().teachers];
   }
 
   public addTeacher(teacher: Omit<Teacher, 'id'>) {
@@ -221,7 +229,7 @@ class DatabaseService {
 
   // --- CLASSES ---
   public getClasses(): SchoolClass[] {
-    return this.getData().classes;
+    return [...this.getData().classes];
   }
 
   public addClass(schoolClass: Omit<SchoolClass, 'id'>) {
@@ -296,12 +304,12 @@ class DatabaseService {
   }
 
   public getVotes(): Vote[] {
-    return this.getData().votes;
+    return [...this.getData().votes];
   }
 
   // --- LOGS ---
   public getLogs(): ActivityLog[] {
-    return this.getData().logs;
+    return [...this.getData().logs];
   }
 
   public addLog(action: string, details: string, type: 'info' | 'success' | 'warning' | 'danger') {
@@ -314,8 +322,7 @@ class DatabaseService {
       type
     };
     data.logs = [newLog, ...data.logs];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    this.notifyListeners();
+    this.saveData(data);
   }
 
   // --- BULK UPLOAD ---
@@ -389,6 +396,7 @@ class DatabaseService {
   }
 
   public factoryReset() {
+    this.cachedData = null;
     localStorage.removeItem(STORAGE_KEY);
     this.notifyListeners();
   }

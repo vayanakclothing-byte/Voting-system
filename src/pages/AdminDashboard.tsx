@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { db } from '../services/db';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +7,8 @@ import * as XLSX from 'xlsx';
 import {
   FaUserShield, FaPlay, FaPause, FaStop, FaRedoAlt, FaPlus, FaEdit, FaTrash, FaFileExcel,
   FaFileCsv, FaDownload, FaUpload, FaCheckCircle, FaExclamationTriangle, FaTimes, FaChartBar,
-  FaUsers, FaChalkboardTeacher, FaSchool, FaClipboardList, FaLock, FaKey, FaSave
+  FaUsers, FaChalkboardTeacher, FaSchool, FaClipboardList, FaLock, FaKey, FaSave,
+  FaSearch, FaChevronLeft, FaChevronRight
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -149,6 +150,68 @@ export const AdminDashboard: React.FC = () => {
   const [bulkType, setBulkType] = useState<'students' | 'teachers' | 'candidates'>('students');
   const [parsedRows, setParsedRows] = useState<any[]>([]);
   const [uploadReport, setUploadReport] = useState<{ imported: number; skipped: number } | null>(null);
+
+  // --- STUDENTS TAB SEARCH, FILTER, AND PAGINATION ---
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentHouseFilter, setStudentHouseFilter] = useState('all');
+  const [studentClassFilter, setStudentClassFilter] = useState('all');
+  const [studentStatusFilter, setStudentStatusFilter] = useState('all');
+  const [studentPage, setStudentPage] = useState(1);
+  const itemsPerPage = 15;
+
+  const filteredStudents = useMemo(() => {
+    return students.filter(s => {
+      const searchLower = studentSearch.toLowerCase();
+      const matchesSearch = s.name.toLowerCase().includes(searchLower) || 
+                            (s.rollNumber && s.rollNumber.toLowerCase().includes(searchLower)) ||
+                            (s.className && s.className.toLowerCase().includes(searchLower));
+      const matchesHouse = studentHouseFilter === 'all' || s.house === studentHouseFilter;
+      const matchesClass = studentClassFilter === 'all' || s.className === studentClassFilter;
+      const matchesStatus = studentStatusFilter === 'all' || 
+                            (studentStatusFilter === 'voted' ? s.hasVoted : !s.hasVoted);
+      return matchesSearch && matchesHouse && matchesClass && matchesStatus;
+    });
+  }, [students, studentSearch, studentHouseFilter, studentClassFilter, studentStatusFilter]);
+
+  // Reset student page on filter change
+  useEffect(() => {
+    setStudentPage(1);
+  }, [studentSearch, studentHouseFilter, studentClassFilter, studentStatusFilter]);
+
+  const paginatedStudents = useMemo(() => {
+    const start = (studentPage - 1) * itemsPerPage;
+    return filteredStudents.slice(start, start + itemsPerPage);
+  }, [filteredStudents, studentPage]);
+
+  const totalStudentPages = Math.ceil(filteredStudents.length / itemsPerPage);
+
+  // --- LOGS TAB SEARCH, FILTER, AND PAGINATION ---
+  const [logSearch, setLogSearch] = useState('');
+  const [logTypeFilter, setLogTypeFilter] = useState('all');
+  const [logPage, setLogPage] = useState(1);
+  const logsPerPage = 15;
+
+  const filteredLogs = useMemo(() => {
+    return logs.filter(l => {
+      const searchLower = logSearch.toLowerCase();
+      const matchesSearch = l.action.toLowerCase().includes(searchLower) || 
+                            l.details.toLowerCase().includes(searchLower);
+      const matchesType = logTypeFilter === 'all' || l.type === logTypeFilter;
+      return matchesSearch && matchesType;
+    });
+  }, [logs, logSearch, logTypeFilter]);
+
+  // Reset log page on filter change
+  useEffect(() => {
+    setLogPage(1);
+  }, [logSearch, logTypeFilter]);
+
+  const paginatedLogs = useMemo(() => {
+    const start = (logPage - 1) * logsPerPage;
+    return filteredLogs.slice(start, start + logsPerPage);
+  }, [filteredLogs, logPage]);
+
+  const totalLogPages = Math.ceil(filteredLogs.length / logsPerPage);
 
   const downloadSampleTemplate = () => {
     let wsData: any[] = [];
@@ -538,13 +601,74 @@ export const AdminDashboard: React.FC = () => {
               </form>
             </div>
 
+            {/* Search and Filters Bar */}
+            <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                {/* Search Input */}
+                <div className="relative w-full md:flex-1">
+                  <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm" />
+                  <input
+                    type="text"
+                    value={studentSearch}
+                    onChange={e => setStudentSearch(e.target.value)}
+                    placeholder="Search by student name, class, or roll number..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-11 pr-4 py-3 text-xs md:text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
+                  />
+                </div>
+
+                {/* Class Filter */}
+                <div className="w-full md:w-48">
+                  <select
+                    value={studentClassFilter}
+                    onChange={e => setStudentClassFilter(e.target.value)}
+                    className="w-full bg-slate-955 border border-slate-800 rounded-2xl px-4 py-3 text-xs md:text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
+                  >
+                    <option value="all">All Classes</option>
+                    {classes.map(c => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* House Filter */}
+                <div className="w-full md:w-48">
+                  <select
+                    value={studentHouseFilter}
+                    onChange={e => setStudentHouseFilter(e.target.value)}
+                    className="w-full bg-slate-955 border border-slate-800 rounded-2xl px-4 py-3 text-xs md:text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
+                  >
+                    <option value="all">All Houses</option>
+                    <option value="Blue">Blue House</option>
+                    <option value="Red">Red House</option>
+                    <option value="Green">Green House</option>
+                    <option value="Yellow">Yellow House</option>
+                  </select>
+                </div>
+
+                {/* Status Filter */}
+                <div className="w-full md:w-48">
+                  <select
+                    value={studentStatusFilter}
+                    onChange={e => setStudentStatusFilter(e.target.value)}
+                    className="w-full bg-slate-955 border border-slate-800 rounded-2xl px-4 py-3 text-xs md:text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="voted">Voted Only</option>
+                    <option value="pending">Pending Only</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             {/* Students Table */}
             <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl overflow-x-auto">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-                <h2 className="text-xl font-extrabold text-white">Registered Students ({students.length})</h2>
+                <h2 className="text-xl font-extrabold text-white">
+                  Registered Students ({filteredStudents.length !== students.length ? `${filteredStudents.length} of ${students.length}` : students.length})
+                </h2>
                 <button 
                   onClick={() => {
-                    const ws = XLSX.utils.json_to_sheet(students.map(s => ({
+                    const ws = XLSX.utils.json_to_sheet(filteredStudents.map(s => ({
                       Name: s.name,
                       Class: s.className,
                       Section: s.section || 'N/A',
@@ -569,21 +693,61 @@ export const AdminDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-sm">
-                  {students.map(stud => (
-                    <tr key={stud.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="py-4 pl-4 font-bold text-white">{stud.name}</td>
-                      <td className="py-4 text-slate-300">{stud.className} {stud.section ? `(Sec ${stud.section})` : ''}</td>
-                      <td className="py-4"><span className={`text-xs px-2.5 py-1 rounded-lg border font-bold ${stud.house === 'Blue' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : stud.house === 'Red' ? 'bg-red-500/20 text-red-300 border-red-500/30' : stud.house === 'Green' ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'}`}>{stud.house}</span></td>
-                      <td className="py-4 text-slate-400 font-mono">{stud.rollNumber || 'N/A'}</td>
-                      <td className="py-4">{stud.hasVoted ? <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-lg border border-emerald-500/30 font-bold flex items-center gap-1 w-max"><FaCheckCircle /><span>Voted</span></span> : <span className="text-xs bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/30 font-bold flex items-center gap-1 w-max"><FaExclamationTriangle /><span>Pending</span></span>}</td>
-                      <td className="py-4 pr-4 text-right space-x-2">
-                        <button onClick={() => handleOpenEditStudent(stud)} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-white border border-slate-700"><FaEdit /></button>
-                        <button onClick={() => handleDeleteStudent(stud.id)} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 hover:text-white border border-slate-700"><FaTrash /></button>
+                  {paginatedStudents.length > 0 ? (
+                    paginatedStudents.map(stud => (
+                      <tr key={stud.id} className="hover:bg-slate-800/30 transition-colors">
+                        <td className="py-4 pl-4 font-bold text-white">{stud.name}</td>
+                        <td className="py-4 text-slate-300">{stud.className} {stud.section ? `(Sec ${stud.section})` : ''}</td>
+                        <td className="py-4"><span className={`text-xs px-2.5 py-1 rounded-lg border font-bold ${stud.house === 'Blue' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : stud.house === 'Red' ? 'bg-red-500/20 text-red-300 border-red-500/30' : stud.house === 'Green' ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'}`}>{stud.house}</span></td>
+                        <td className="py-4 text-slate-400 font-mono">{stud.rollNumber || 'N/A'}</td>
+                        <td className="py-4">{stud.hasVoted ? <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-lg border border-emerald-500/30 font-bold flex items-center gap-1 w-max"><FaCheckCircle /><span>Voted</span></span> : <span className="text-xs bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/30 font-bold flex items-center gap-1 w-max"><FaExclamationTriangle /><span>Pending</span></span>}</td>
+                        <td className="py-4 pr-4 text-right space-x-2">
+                          <button onClick={() => handleOpenEditStudent(stud)} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-white border border-slate-700"><FaEdit /></button>
+                          <button onClick={() => handleDeleteStudent(stud.id)} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 hover:text-white border border-slate-700"><FaTrash /></button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-500">
+                        No students found matching current filters.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
+
+              {/* Pagination Controls */}
+              {totalStudentPages > 1 && (
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-800/60">
+                  <div className="text-xs text-slate-400">
+                    Showing <strong className="text-slate-200">{Math.min(filteredStudents.length, (studentPage - 1) * itemsPerPage + 1)}</strong> to{' '}
+                    <strong className="text-slate-200">{Math.min(filteredStudents.length, studentPage * itemsPerPage)}</strong> of{' '}
+                    <strong className="text-slate-200">{filteredStudents.length}</strong> students
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setStudentPage(p => Math.max(1, p - 1))}
+                      disabled={studentPage === 1}
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-slate-300 border border-slate-700 transition-colors"
+                    >
+                      <FaChevronLeft className="text-xs" />
+                    </button>
+                    <span className="text-xs font-bold text-slate-300 px-3">
+                      Page {studentPage} of {totalStudentPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setStudentPage(p => Math.min(totalStudentPages, p + 1))}
+                      disabled={studentPage === totalStudentPages}
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-slate-300 border border-slate-700 transition-colors"
+                    >
+                      <FaChevronRight className="text-xs" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -725,23 +889,97 @@ export const AdminDashboard: React.FC = () => {
 
         {/* TAB 7: ACTIVITY LOGS */}
         {activeTab === 'logs' && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
-            <h2 className="text-xl font-extrabold text-white mb-2">Complete Audit Logs</h2>
-            <p className="text-xs text-slate-400 mb-6">Full chronological record of all administrative and student voting events.</p>
-
-            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-              {logs.map(log => (
-                <div key={log.id} className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80 flex items-start justify-between gap-4 shadow-inner">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`w-2 h-2 rounded-full ${log.type === 'success' ? 'bg-emerald-500' : log.type === 'danger' ? 'bg-rose-500' : log.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`} />
-                      <span className="text-xs font-bold text-white">{log.action}</span>
-                    </div>
-                    <p className="text-xs text-slate-300">{log.details}</p>
-                  </div>
-                  <span className="text-[10px] text-slate-500 font-mono shrink-0">{new Date(log.timestamp).toLocaleString()}</span>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="space-y-6">
+            {/* Search and Filters Bar */}
+            <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                {/* Search Input */}
+                <div className="relative w-full md:flex-1">
+                  <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm" />
+                  <input
+                    type="text"
+                    value={logSearch}
+                    onChange={e => setLogSearch(e.target.value)}
+                    placeholder="Search logs by action or details..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-11 pr-4 py-3 text-xs md:text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
+                  />
                 </div>
-              ))}
+
+                {/* Type Filter */}
+                <div className="w-full md:w-48">
+                  <select
+                    value={logTypeFilter}
+                    onChange={e => setLogTypeFilter(e.target.value)}
+                    className="w-full bg-slate-955 border border-slate-800 rounded-2xl px-4 py-3 text-xs md:text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="info">Info</option>
+                    <option value="success">Success</option>
+                    <option value="warning">Warning</option>
+                    <option value="danger">Danger</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
+              <h2 className="text-xl font-extrabold text-white mb-2">
+                Complete Audit Logs ({filteredLogs.length !== logs.length ? `${filteredLogs.length} of ${logs.length}` : logs.length})
+              </h2>
+              <p className="text-xs text-slate-400 mb-6">Full chronological record of all administrative and student voting events.</p>
+
+              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 mb-6">
+                {paginatedLogs.length > 0 ? (
+                  paginatedLogs.map(log => (
+                    <div key={log.id} className="bg-slate-955 p-4 rounded-2xl border border-slate-800/85 flex items-start justify-between gap-4 shadow-inner">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`w-2 h-2 rounded-full ${log.type === 'success' ? 'bg-emerald-500' : log.type === 'danger' ? 'bg-rose-500' : log.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`} />
+                          <span className="text-xs font-bold text-white">{log.action}</span>
+                        </div>
+                        <p className="text-xs text-slate-300">{log.details}</p>
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-mono shrink-0">{new Date(log.timestamp).toLocaleString()}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-slate-500 text-xs">
+                    No activity logs found matching current filters.
+                  </div>
+                )}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalLogPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t border-slate-800/60">
+                  <div className="text-xs text-slate-400">
+                    Showing <strong className="text-slate-200">{Math.min(filteredLogs.length, (logPage - 1) * logsPerPage + 1)}</strong> to{' '}
+                    <strong className="text-slate-200">{Math.min(filteredLogs.length, logPage * logsPerPage)}</strong> of{' '}
+                    <strong className="text-slate-200">{filteredLogs.length}</strong> activity logs
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setLogPage(p => Math.max(1, p - 1))}
+                      disabled={logPage === 1}
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-slate-300 border border-slate-700 transition-colors"
+                    >
+                      <FaChevronLeft className="text-xs" />
+                    </button>
+                    <span className="text-xs font-bold text-slate-300 px-3">
+                      Page {logPage} of {totalLogPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setLogPage(p => Math.min(totalLogPages, p + 1))}
+                      disabled={logPage === totalLogPages}
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-slate-300 border border-slate-700 transition-colors"
+                    >
+                      <FaChevronRight className="text-xs" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

@@ -167,7 +167,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
+    setIsDarkMode(true);
   };
 
   const toggleVoiceAnnouncements = () => {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaGraduationCap, FaExpand, FaCompress, FaMoon, FaSun, FaVolumeUp, FaVolumeMute, FaUserShield, FaSignOutAlt, FaQrcode } from 'react-icons/fa';
+import { FaGraduationCap, FaExpand, FaCompress, FaVolumeUp, FaVolumeMute, FaUserShield, FaSignOutAlt, FaQrcode } from 'react-icons/fa';
 import { QRModal } from './QRModal';
 
 export const Navbar: React.FC = () => {
@@ -10,12 +10,10 @@ export const Navbar: React.FC = () => {
     isAdminLoggedIn,
     selectedHouse,
     isFullscreen,
-    isDarkMode,
     voiceAnnouncements,
     logoutStudent,
     logoutAdmin,
     toggleFullscreen,
-    toggleDarkMode,
     toggleVoiceAnnouncements
   } = useApp();
 
@@ -75,7 +73,7 @@ export const Navbar: React.FC = () => {
           {/* QR Code Voting Popup Button */}
           <button
             onClick={() => setIsQRModalOpen(true)}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all tooltip"
+            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all tooltip hidden sm:block"
             title="Smart Board QR Voting"
           >
             <FaQrcode className="text-base md:text-lg text-indigo-400" />
@@ -84,20 +82,13 @@ export const Navbar: React.FC = () => {
           {/* Voice Announcement Toggle */}
           <button
             onClick={toggleVoiceAnnouncements}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all"
+            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all hidden sm:block"
             title={voiceAnnouncements ? "Mute Voice Announcements" : "Enable Voice Announcements"}
           >
             {voiceAnnouncements ? <FaVolumeUp className="text-base md:text-lg text-emerald-400" /> : <FaVolumeMute className="text-base md:text-lg text-rose-400" />}
           </button>
 
-          {/* Dark / Light Mode Toggle */}
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all"
-            title="Toggle Theme"
-          >
-            {isDarkMode ? <FaSun className="text-base md:text-lg text-amber-400" /> : <FaMoon className="text-base md:text-lg text-indigo-400" />}
-          </button>
+
 
           {/* Fullscreen Toggle */}
           <button
