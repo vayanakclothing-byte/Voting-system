@@ -34,7 +34,7 @@ export const SplashScreen: React.FC = () => {
             transition={{ duration: 0.8, type: "spring", bounce: 0.5 }}
             className="w-40 h-40 md:w-56 md:h-56 flex items-center justify-center mb-6 relative z-10"
           >
-            <img src="logo.png" alt="Royal Academy Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]" onError={(e) => { (e.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/shapes/svg?seed=RA'; }} />
+            <img src="/logo.png" alt="Royal Academy Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]" onError={(e) => { (e.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/shapes/svg?seed=RA'; }} />
           </motion.div>
 
           <motion.h1
