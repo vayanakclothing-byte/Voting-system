@@ -37,7 +37,7 @@ export const Navbar: React.FC = () => {
         {/* Left: School Logo & Title */}
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
           <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center shrink-0">
-            <img src="logo.png" alt="Royal Academy Logo" className="w-full h-full object-contain filter drop-shadow-md" onError={(e) => { (e.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/shapes/svg?seed=RA'; }} />
+            <img src="/logo.png" alt="Royal Academy Logo" className="w-full h-full object-contain filter drop-shadow-md" onError={(e) => { (e.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/shapes/svg?seed=RA'; }} />
           </div>
           <div>
             <h1 className="font-extrabold text-base md:text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
