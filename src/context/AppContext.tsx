@@ -9,8 +9,9 @@ interface StudentSession {
   id?: string;
   name: string;
   className: string;
-  house: HouseColor;
+  house: HouseColor | 'Teacher';
   hasVoted?: boolean;
+  isTeacher?: boolean;
 }
 
 interface AppContextType {
@@ -111,12 +112,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return false;
     }
 
-    // Verify if student already voted
-    const student = students.find(s => s.id === session.id || s.name.toLowerCase() === session.name.toLowerCase());
-    if (student && student.hasVoted) {
-      toast.error('You have already submitted your vote! Multiple voting is strictly prohibited.');
-      db.addLog('Security Alert: Duplicate Login Attempt', `Student ${session.name} (${session.className}) attempted to login again after voting.`, 'danger');
-      return false;
+    // Verify if student/teacher already voted
+    if (session.isTeacher) {
+      const teacher = teachers.find(t => t.id === session.id || t.name.toLowerCase() === session.name.toLowerCase());
+      if (teacher && teacher.hasVoted) {
+        toast.error('You have already submitted your vote! Multiple voting is strictly prohibited.');
+        db.addLog('Security Alert: Duplicate Login Attempt', `Teacher ${session.name} attempted to login again after voting.`, 'danger');
+        return false;
+      }
+    } else {
+      const student = students.find(s => s.id === session.id || s.name.toLowerCase() === session.name.toLowerCase());
+      if (student && student.hasVoted) {
+        toast.error('You have already submitted your vote! Multiple voting is strictly prohibited.');
+        db.addLog('Security Alert: Duplicate Login Attempt', `Student ${session.name} (${session.className}) attempted to login again after voting.`, 'danger');
+        return false;
+      }
     }
 
     setCurrentStudent(session);

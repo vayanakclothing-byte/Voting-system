@@ -15,6 +15,8 @@ export interface Teacher {
   name: string;
   subject?: string;
   department?: string;
+  hasVoted?: boolean;
+  votedAt?: string;
 }
 
 export interface Candidate {
@@ -33,7 +35,7 @@ export interface Vote {
   studentId: string;
   studentName: string;
   className: string;
-  house: HouseColor;
+  house: HouseColor | 'Teacher' | 'All' | string;
   votedCandidates: { [position: string]: string }; // position -> candidateId
   timestamp: string;
 }

@@ -152,21 +152,22 @@ class DatabaseService {
   public async deleteClass(id: string) { if (firestore) await deleteDoc(doc(firestore, 'classes', id)); }
 
   // --- VOTING (TRANSACTIONAL) ---
-  public async castVote(studentId: string, studentName: string, className: string, house: HouseColor, votedCandidates: { [position: string]: string }): Promise<{ success: boolean; message: string }> {
+  public async castVote(studentId: string, studentName: string, className: string, house: HouseColor | 'Teacher' | 'All' | string, votedCandidates: { [position: string]: string }): Promise<{ success: boolean; message: string }> {
     if (!firestore) return { success: false, message: 'Database not connected.' };
     if (this.state.electionState.status !== 'active') return { success: false, message: 'Election is not active.' };
 
     try {
       await runTransaction(firestore, async (transaction) => {
-        let studentRef = null;
+        let personRef = null;
         let isManual = false;
+        const collectionName = className === 'Teacher' ? 'teachers' : 'students';
         
         if (studentId.startsWith('manual_')) {
           isManual = true;
         } else {
-          studentRef = doc(firestore, 'students', studentId);
-          const studentDoc = await transaction.get(studentRef);
-          if (studentDoc.exists() && studentDoc.data().hasVoted) {
+          personRef = doc(firestore, collectionName, studentId);
+          const personDoc = await transaction.get(personRef);
+          if (personDoc.exists() && personDoc.data().hasVoted) {
             throw new Error('ALREADY_VOTED');
           }
         }
@@ -177,12 +178,12 @@ class DatabaseService {
         const voteRef = doc(collection(firestore, 'votes'));
         transaction.set(voteRef, { id: voteRef.id, studentId, studentName, className, house, votedCandidates, timestamp });
 
-        // Mark student as voted
-        if (!isManual && studentRef) {
-          transaction.update(studentRef, { hasVoted: true, votedAt: timestamp });
+        // Mark person as voted
+        if (!isManual && personRef) {
+          transaction.update(personRef, { hasVoted: true, votedAt: timestamp });
         } else if (isManual) {
-          const newStudentRef = doc(collection(firestore, 'students'));
-          transaction.set(newStudentRef, { id: newStudentRef.id, name: studentName, className, hasVoted: true, votedAt: timestamp });
+          const newPersonRef = doc(collection(firestore, collectionName));
+          transaction.set(newPersonRef, { id: newPersonRef.id, name: studentName, className, hasVoted: true, votedAt: timestamp });
         }
 
         // Increment candidates safely

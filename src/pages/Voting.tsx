@@ -32,7 +32,7 @@ export const Voting: React.FC = () => {
   const positions = ['Head Boy', 'Head Girl', 'Sports Captain', 'Discipline Captain'];
 
   // Filter candidates to show ONLY those belonging to the student's selected house color
-  const houseCandidates = candidates.filter(c => c.house === selectedHouse);
+  const houseCandidates = currentStudent.isTeacher ? candidates : candidates.filter(c => c.house === selectedHouse);
 
   const handleSelectCandidate = (position: string, candidateId: string) => {
     setSelections(prev => ({
@@ -86,7 +86,7 @@ export const Voting: React.FC = () => {
             Cast Your Encrypted Ballot
           </h1>
           <p className="text-xs md:text-sm text-slate-300 max-w-xl leading-relaxed">
-            Welcome, <strong className="text-white font-bold">{currentStudent.name}</strong>. You are viewing candidates exclusively for the <strong className="text-white font-bold">{currentStudent.house} House</strong>. Please select one candidate for each position below.
+            Welcome, <strong className="text-white font-bold">{currentStudent.name}</strong>. You are viewing candidates {currentStudent.isTeacher ? 'across all houses' : <>exclusively for the <strong className="text-white font-bold">{currentStudent.house} House</strong></>}. Please select one candidate for each position below.
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export const Voting: React.FC = () => {
         <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-12 text-center max-w-lg mx-auto shadow-xl">
           <FaExclamationCircle className="text-amber-400 text-5xl mx-auto mb-4 animate-bounce" />
           <h2 className="text-xl font-bold text-white mb-2">No Candidates Found</h2>
-          <p className="text-xs text-slate-400 mb-6">No candidates have been registered for {selectedHouse} House yet. Please inform your lab supervisor.</p>
+          <p className="text-xs text-slate-400 mb-6">No candidates have been registered {currentStudent.isTeacher ? 'yet' : `for ${selectedHouse} House yet`}. Please inform your lab supervisor.</p>
           <button
             onClick={() => navigate('/')}
             className="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider transition-colors"
@@ -162,7 +162,7 @@ export const Voting: React.FC = () => {
                 {/* Candidate Cards Grid */}
                 {posCandidates.length === 0 ? (
                   <div className="bg-slate-950/60 p-6 rounded-2xl border border-slate-800/80 text-center text-xs text-slate-400 font-medium">
-                    No candidates registered for {pos} in {selectedHouse} House.
+                    No candidates registered for {pos} {currentStudent.isTeacher ? 'across any house' : `in ${selectedHouse} House`}.
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
@@ -199,7 +199,7 @@ export const Voting: React.FC = () => {
             <div className="hidden sm:block text-slate-600">|</div>
             <div className="hidden sm:block">
               <span className="text-slate-400">Voting for: </span>
-              <strong className="text-white font-bold">{currentStudent.house} House</strong>
+              <strong className="text-white font-bold">{currentStudent.isTeacher ? 'All Houses' : `${currentStudent.house} House`}</strong>
             </div>
           </div>
 

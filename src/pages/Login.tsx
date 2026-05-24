@@ -10,6 +10,7 @@ import { NoticeBoard } from '../components/NoticeBoard';
 export const Login: React.FC = () => {
   const {
     students,
+    teachers,
     classes,
     electionState,
     loginStudent,
@@ -30,6 +31,17 @@ export const Login: React.FC = () => {
   // Filter students based on class selection
   const classStudents = useMemo(() => {
     if (!selectedClass) return [];
+    
+    if (selectedClass === 'Teacher') {
+      return teachers.map(t => ({
+        id: t.id,
+        name: t.name,
+        className: 'Teacher',
+        section: '',
+        hasVoted: t.hasVoted || false
+      })).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
     const targetClass = selectedClass.trim().toLowerCase();
     let filtered = students.filter(s => (s.className || '').trim().toLowerCase() === targetClass);
     
@@ -38,7 +50,7 @@ export const Login: React.FC = () => {
       filtered = filtered.filter(s => (s.section || '').trim().toLowerCase() === targetSection);
     }
     return filtered.sort((a, b) => a.name.localeCompare(b.name));
-  }, [students, selectedClass, selectedSection]);
+  }, [students, teachers, selectedClass, selectedSection]);
 
   const availableSections = useMemo(() => {
     if (!selectedClass) return [];
@@ -94,7 +106,7 @@ export const Login: React.FC = () => {
       alert('Please enter or select your Student Name.');
       return;
     }
-    if (!houseInput) {
+    if (!houseInput && selectedClass !== 'Teacher') {
       alert('Please select your House Color.');
       return;
     }
@@ -103,8 +115,9 @@ export const Login: React.FC = () => {
     const success = loginStudent({
       name: studentNameInput.trim(),
       className: selectedClass,
-      house: houseInput,
-      id: classStudents.find(s => s.name.toLowerCase() === studentNameInput.trim().toLowerCase())?.id
+      house: selectedClass === 'Teacher' ? 'Teacher' : houseInput,
+      id: classStudents.find(s => s.name.toLowerCase() === studentNameInput.trim().toLowerCase())?.id,
+      isTeacher: selectedClass === 'Teacher'
     });
 
     if (success) {
@@ -179,6 +192,7 @@ export const Login: React.FC = () => {
               {classes.map(c => (
                 <option key={c.id} value={c.name}>{c.name}</option>
               ))}
+              <option value="Teacher">Teacher</option>
             </select>
           </div>
 
@@ -291,6 +305,7 @@ export const Login: React.FC = () => {
           </div>
 
           {/* 3. Select House Color */}
+          {selectedClass !== 'Teacher' && (
           <div>
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">
               3. Select House Color (Dynamic Theme)
@@ -353,6 +368,7 @@ export const Login: React.FC = () => {
               </button>
             </div>
           </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex items-center gap-4 pt-4 border-t border-slate-800">
