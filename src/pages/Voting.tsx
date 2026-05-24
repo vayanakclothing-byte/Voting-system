@@ -31,6 +31,8 @@ export const Voting: React.FC = () => {
 
   const positions = ['Head Boy', 'Head Girl', 'Sports Captain', 'Discipline Captain'];
 
+  if (!currentStudent) return null;
+
   // Filter candidates to show ONLY those belonging to the student's selected house color
   const houseCandidates = currentStudent.isTeacher ? candidates : candidates.filter(c => c.house === selectedHouse);
 
@@ -67,8 +69,6 @@ export const Voting: React.FC = () => {
       }
     }
   };
-
-  if (!currentStudent) return null;
 
   return (
     <main className="min-h-screen pb-20 pt-8 px-4 md:px-8 max-w-7xl mx-auto relative z-10">

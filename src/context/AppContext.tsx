@@ -27,7 +27,7 @@ interface AppContextType {
   // Sessions
   currentStudent: StudentSession | null;
   isAdminLoggedIn: boolean;
-  selectedHouse: HouseColor | null;
+  selectedHouse: HouseColor | 'Teacher' | null;
 
   // UI States
   isFullscreen: boolean;
@@ -39,7 +39,7 @@ interface AppContextType {
   logoutStudent: () => void;
   loginAdmin: (email: string, pass: string) => Promise<boolean>;
   logoutAdmin: () => Promise<void>;
-  setSelectedHouse: (house: HouseColor | null) => void;
+  setSelectedHouse: (house: HouseColor | 'Teacher' | null) => void;
   toggleFullscreen: () => void;
   toggleDarkMode: () => void;
   toggleVoiceAnnouncements: () => void;
@@ -65,7 +65,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
 
-  const [selectedHouse, setSelectedHouse] = useState<HouseColor | null>(() => {
+  const [selectedHouse, setSelectedHouse] = useState<HouseColor | 'Teacher' | null>(() => {
     return currentStudent ? currentStudent.house : null;
   });
 

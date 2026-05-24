@@ -115,7 +115,7 @@ export const Login: React.FC = () => {
     const success = loginStudent({
       name: studentNameInput.trim(),
       className: selectedClass,
-      house: selectedClass === 'Teacher' ? 'Teacher' : houseInput,
+      house: selectedClass === 'Teacher' ? 'Teacher' : (houseInput as HouseColor),
       id: classStudents.find(s => s.name.toLowerCase() === studentNameInput.trim().toLowerCase())?.id,
       isTeacher: selectedClass === 'Teacher'
     });
