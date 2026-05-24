@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { AnnouncementBanner } from './components/AnnouncementBanner';
 import { ParticlesBackground } from './components/ParticlesBackground';
 import { SplashScreen } from './components/SplashScreen';
-import { Login } from './pages/Login';
-import { Voting } from './pages/Voting';
-import { Confirmation } from './pages/Confirmation';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { LiveResults } from './pages/LiveResults';
 import { Toaster } from 'react-hot-toast';
 import { AnimatePresence, motion } from 'framer-motion';
+
+// Lazy loaded routes for code-splitting and performance
+const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
+const Voting = lazy(() => import('./pages/Voting').then(module => ({ default: module.Voting })));
+const Confirmation = lazy(() => import('./pages/Confirmation').then(module => ({ default: module.Confirmation })));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
+const LiveResults = lazy(() => import('./pages/LiveResults').then(module => ({ default: module.LiveResults })));
 
 const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -32,14 +34,16 @@ const AnimatedRoutes = () => {
 
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><Login /></PageTransition>} />
-        <Route path="/voting" element={<PageTransition><Voting /></PageTransition>} />
-        <Route path="/confirmation" element={<PageTransition><Confirmation /></PageTransition>} />
-        <Route path="/admin" element={<PageTransition><AdminDashboard /></PageTransition>} />
-        <Route path="/results" element={<PageTransition><LiveResults /></PageTransition>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<div className="min-h-[50vh] flex items-center justify-center text-indigo-500 font-bold text-sm tracking-widest uppercase animate-pulse">Loading Application Core...</div>}>
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<PageTransition><Login /></PageTransition>} />
+          <Route path="/voting" element={<PageTransition><Voting /></PageTransition>} />
+          <Route path="/confirmation" element={<PageTransition><Confirmation /></PageTransition>} />
+          <Route path="/admin" element={<PageTransition><AdminDashboard /></PageTransition>} />
+          <Route path="/results" element={<PageTransition><LiveResults /></PageTransition>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </AnimatePresence>
   );
 };

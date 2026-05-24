@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
-import { FaTrophy, FaChartBar, FaChartPie, FaUsers, FaTv, FaSyncAlt, FaArrowLeft, FaMedal } from 'react-icons/fa';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { FaTrophy, FaChartBar, FaChartPie, FaUsers, FaTv, FaSyncAlt, FaArrowLeft, FaMedal, FaClock } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import Confetti from 'react-confetti';
 
@@ -10,7 +10,7 @@ export const LiveResults: React.FC = () => {
   const { candidates, students, votes, electionState, refreshData } = useApp();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'positions' | 'analytics' | 'houses'>('positions');
+  const [activeTab, setActiveTab] = useState<'positions' | 'analytics' | 'houses' | 'timeline'>('positions');
   const [smartBoardMode, setSmartBoardMode] = useState<boolean>(false);
   const [celebrateWinners, setCelebrateWinners] = useState<boolean>(false);
 
@@ -34,6 +34,23 @@ export const LiveResults: React.FC = () => {
       };
     });
   }, [candidates]);
+
+  // Calculate Voter Turnout Timeline
+  const timelineData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    votes.forEach(v => {
+      const d = new Date(v.timestamp);
+      const time = `${d.getHours().toString().padStart(2, '0')}:${(Math.floor(d.getMinutes() / 10) * 10).toString().padStart(2, '0')}`;
+      counts[time] = (counts[time] || 0) + 1;
+    });
+    let runningTotal = 0;
+    return Object.entries(counts)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([time, count]) => {
+        runningTotal += count;
+        return { time, count, runningTotal };
+      });
+  }, [votes]);
 
   // Determine winners for each position
   const winners = useMemo(() => {
@@ -196,6 +213,13 @@ export const LiveResults: React.FC = () => {
         >
           <FaUsers />
           <span>House-wise Statistics</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('timeline')}
+          className={`flex-1 md:flex-none px-6 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 ${activeTab === 'timeline' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+        >
+          <FaClock />
+          <span>Voter Turnout Timeline</span>
         </button>
       </div>
 
@@ -376,6 +400,32 @@ export const LiveResults: React.FC = () => {
                     </Pie>
                     <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '1rem', color: '#fff', fontSize: '12px' }} />
                   </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Tab 4: Voter Turnout Timeline */}
+        {activeTab === 'timeline' && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="mb-12">
+            <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
+              <div className="mb-8">
+                <h3 className="text-xl md:text-2xl font-extrabold text-white mb-2">Voter Turnout Over Time</h3>
+                <p className="text-xs md:text-sm text-slate-400">Cumulative timeline showing the rate of student participation during the election period.</p>
+              </div>
+              <div className="h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={timelineData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <XAxis dataKey="time" stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '1rem', color: '#fff' }} 
+                      itemStyle={{ color: '#818cf8', fontWeight: 'bold' }}
+                      labelStyle={{ color: '#94a3b8', marginBottom: '0.25rem' }}
+                    />
+                    <Line type="monotone" dataKey="runningTotal" name="Total Votes Cast" stroke="#6366f1" strokeWidth={4} dot={{ r: 4, strokeWidth: 2, fill: '#0f172a' }} activeDot={{ r: 6, strokeWidth: 0, fill: '#818cf8' }} />
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>
