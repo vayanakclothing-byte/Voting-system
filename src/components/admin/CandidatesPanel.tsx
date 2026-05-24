@@ -51,6 +51,13 @@ export const CandidatesPanel: React.FC<CandidatesPanelProps> = ({ candidates, re
     }
   };
 
+  const handleDeleteAllCandidates = () => {
+    if (window.confirm('Are you absolutely sure you want to delete ALL candidates? This cannot be undone!')) {
+      db.deleteAllCandidates();
+      refreshData();
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="space-y-8">
       {/* Add / Edit Form */}
@@ -118,7 +125,12 @@ export const CandidatesPanel: React.FC<CandidatesPanelProps> = ({ candidates, re
 
       {/* Candidates Table List */}
       <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl overflow-x-auto">
-        <h2 className="text-xl font-extrabold text-white mb-6">Registered Candidates List</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-extrabold text-white">Registered Candidates List</h2>
+          <button onClick={handleDeleteAllCandidates} className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 font-bold text-xs flex items-center gap-2 border border-rose-500/30 transition-colors">
+            <FaTrash /><span>Delete All</span>
+          </button>
+        </div>
         <table className="w-full text-left border-collapse min-w-[600px]">
           <thead>
             <tr className="border-b border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider">

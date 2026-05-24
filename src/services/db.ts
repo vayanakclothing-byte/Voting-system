@@ -379,6 +379,22 @@ class DatabaseService {
     return { imported: count, skipped: candidates.length - count };
   }
 
+  public deleteAllCandidates() {
+    const data = this.getData();
+    const count = data.candidates.length;
+    data.candidates = [];
+    this.saveData(data);
+    this.addLog('Bulk Delete', `Deleted all ${count} candidates.`, 'danger');
+  }
+
+  public deleteAllStudents() {
+    const data = this.getData();
+    const count = data.students.length;
+    data.students = [];
+    this.saveData(data);
+    this.addLog('Bulk Delete', `Deleted all ${count} students.`, 'danger');
+  }
+
   // --- RESET / FACTORY SEED ---
   public resetElectionData() {
     const data = this.getData();

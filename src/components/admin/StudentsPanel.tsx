@@ -47,6 +47,13 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
     if (window.confirm('Delete student?')) { db.deleteStudent(id); refreshData(); }
   };
 
+  const handleDeleteAllStudents = () => {
+    if (window.confirm('Are you absolutely sure you want to delete ALL students? This cannot be undone!')) {
+      db.deleteAllStudents();
+      refreshData();
+    }
+  };
+
   const [studentSearch, setStudentSearch] = useState('');
   const [studentHouseFilter, setStudentHouseFilter] = useState('all');
   const [studentClassFilter, setStudentClassFilter] = useState('all');
@@ -150,16 +157,21 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
       <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl overflow-x-auto">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <h2 className="text-xl font-extrabold text-white">Registered Students ({filteredStudents.length !== students.length ? `${filteredStudents.length} of ${students.length}` : students.length})</h2>
-          <button onClick={() => {
-            const ws = XLSX.utils.json_to_sheet(filteredStudents.map(s => ({
-              Name: s.name, Class: s.className, Section: s.section || 'N/A', House: s.house, 'Roll No': s.rollNumber || 'N/A', 'Voted Status': s.hasVoted ? 'VOTED' : 'PENDING'
-            })));
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Voter Directory");
-            XLSX.writeFile(wb, "Voter_Directory_Report.xlsx");
-          }} className="px-4 py-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 font-bold text-xs flex items-center gap-2 border border-indigo-500/30 transition-colors">
-            <FaDownload /><span>Export Voter Directory</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={handleDeleteAllStudents} className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 font-bold text-xs flex items-center gap-2 border border-rose-500/30 transition-colors">
+              <FaTrash /><span>Delete All</span>
+            </button>
+            <button onClick={() => {
+              const ws = XLSX.utils.json_to_sheet(filteredStudents.map(s => ({
+                Name: s.name, Class: s.className, Section: s.section || 'N/A', House: s.house, 'Roll No': s.rollNumber || 'N/A', 'Voted Status': s.hasVoted ? 'VOTED' : 'PENDING'
+              })));
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, "Voter Directory");
+              XLSX.writeFile(wb, "Voter_Directory_Report.xlsx");
+            }} className="px-4 py-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 font-bold text-xs flex items-center gap-2 border border-indigo-500/30 transition-colors">
+              <FaDownload /><span>Export Voter Directory</span>
+            </button>
+          </div>
         </div>
         <table className="w-full text-left border-collapse min-w-[600px]">
           <thead><tr className="border-b border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider"><th className="pb-4 pl-4">Name</th><th className="pb-4">Class</th><th className="pb-4">House</th><th className="pb-4">Roll No.</th><th className="pb-4">Voting Status</th><th className="pb-4 pr-4 text-right">Actions</th></tr></thead>
