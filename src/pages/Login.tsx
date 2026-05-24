@@ -21,6 +21,7 @@ export const Login: React.FC = () => {
   const navigate = useNavigate();
 
   const [selectedClass, setSelectedClass] = useState<string>('');
+  const [selectedSection, setSelectedSection] = useState<string>('');
   const [studentNameInput, setStudentNameInput] = useState<string>('');
   const [houseInput, setHouseInput] = useState<HouseColor | ''>('');
   const [isManualMode, setIsManualMode] = useState<boolean>(electionState.allowManualTyping);
@@ -29,8 +30,17 @@ export const Login: React.FC = () => {
   // Filter students based on class selection
   const classStudents = useMemo(() => {
     if (!selectedClass) return [];
-    return students.filter(s => s.className === selectedClass);
-  }, [students, selectedClass]);
+    let filtered = students.filter(s => s.className === selectedClass);
+    if (selectedSection) {
+      filtered = filtered.filter(s => s.section === selectedSection);
+    }
+    return filtered;
+  }, [students, selectedClass, selectedSection]);
+
+  const availableSections = useMemo(() => {
+    const cls = classes.find(c => c.name === selectedClass);
+    return cls?.sections || [];
+  }, [classes, selectedClass]);
 
   // Auto-suggestion list while typing
   const suggestions = useMemo(() => {
@@ -52,6 +62,7 @@ export const Login: React.FC = () => {
 
   const handleReset = () => {
     setSelectedClass('');
+    setSelectedSection('');
     setStudentNameInput('');
     setHouseInput('');
     setSelectedHouse(null);
@@ -144,6 +155,7 @@ export const Login: React.FC = () => {
               value={selectedClass}
               onChange={(e) => {
                 setSelectedClass(e.target.value);
+                setSelectedSection('');
                 setStudentNameInput(''); // reset student name on class change
               }}
               className="w-full bg-slate-950/80 border border-slate-700/80 rounded-2xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
@@ -155,6 +167,28 @@ export const Login: React.FC = () => {
               ))}
             </select>
           </div>
+
+          {/* 1.5 Select Section */}
+          {selectedClass && availableSections.length > 0 && (
+            <div>
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                1.5 Select Your Section
+              </label>
+              <select
+                value={selectedSection}
+                onChange={(e) => {
+                  setSelectedSection(e.target.value);
+                  setStudentNameInput('');
+                }}
+                className="w-full bg-slate-950/80 border border-slate-700/80 rounded-2xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
+              >
+                <option value="">-- All Sections --</option>
+                {availableSections.map(sec => (
+                  <option key={sec} value={sec}>Section {sec}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* 2. Student Name Input / Dropdown */}
           <div className="relative">
