@@ -10,6 +10,7 @@ interface StudentSession {
   name: string;
   className: string;
   house: HouseColor;
+  hasVoted?: boolean;
 }
 
 interface AppContextType {
@@ -41,7 +42,7 @@ interface AppContextType {
   toggleFullscreen: () => void;
   toggleDarkMode: () => void;
   toggleVoiceAnnouncements: () => void;
-  castStudentVote: (votedCandidates: { [position: string]: string }) => { success: boolean; message: string };
+  castStudentVote: (votedCandidates: { [position: string]: string }) => Promise<{ success: boolean; message: string }>;
   refreshData: () => void;
 }
 
@@ -82,7 +83,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   useEffect(() => {
-    refreshData();
+    db.initRealtimeListeners();
     const unsubscribeDb = db.subscribe(() => {
       refreshData();
     });
@@ -189,27 +190,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     toast.success(`Voice announcements ${!voiceAnnouncements ? 'enabled' : 'disabled'}`);
   };
 
-  const castStudentVote = (votedCandidates: { [position: string]: string }) => {
-    if (!currentStudent) {
-      return { success: false, message: 'No active student session found.' };
-    }
-
-    const result = db.castVote(
-      currentStudent.id || '',
-      currentStudent.name,
-      currentStudent.className,
-      currentStudent.house,
-      votedCandidates
-    );
-
-    if (result.success) {
+  const castStudentVote = async (votedCandidates: { [position: string]: string }): Promise<{ success: boolean; message: string }> => {
+    if (!currentStudent) return { success: false, message: 'Not logged in.' };
+    const res = await db.castVote(currentStudent.id || '', currentStudent.name, currentStudent.className, currentStudent.house, votedCandidates);
+    if (res.success) {
+      setCurrentStudent({ ...currentStudent, hasVoted: true });
       if (voiceAnnouncements) {
         const speech = new SpeechSynthesisUtterance('Your vote has been successfully submitted. Thank you.');
         window.speechSynthesis.speak(speech);
       }
     }
-
-    return result;
+    return res;
   };
 
   return (

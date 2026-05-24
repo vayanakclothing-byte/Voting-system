@@ -58,7 +58,7 @@ export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData })
     reader.readAsBinaryString(file);
   };
 
-  const handleConfirmBulkUpload = () => {
+  const handleConfirmBulkUpload = async () => {
     if (parsedRows.length === 0) return;
 
     if (bulkType === 'students') {
@@ -75,7 +75,7 @@ export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData })
         toast.error('Validation failed: ' + parsed.error.issues[0].message);
         return;
       }
-      const res = db.bulkUploadStudents(parsed.data);
+      const res = await db.bulkUploadStudents(parsed.data);
       setUploadReport(res);
     } else if (bulkType === 'teachers') {
       const formatted = parsedRows.map(r => ({
@@ -89,7 +89,7 @@ export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData })
         toast.error('Validation failed: ' + parsed.error.issues[0].message);
         return;
       }
-      const res = db.bulkUploadTeachers(parsed.data);
+      const res = await db.bulkUploadTeachers(parsed.data);
       setUploadReport(res);
     } else {
       const formatted = parsedRows.map(r => ({
@@ -106,7 +106,7 @@ export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData })
         toast.error('Validation failed: ' + parsed.error.issues[0].message);
         return;
       }
-      const res = db.bulkUploadCandidates(parsed.data);
+      const res = await db.bulkUploadCandidates(parsed.data);
       setUploadReport(res);
     }
 

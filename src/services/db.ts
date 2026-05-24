@@ -1,123 +1,60 @@
 import { Student, Teacher, Candidate, Vote, ElectionState, ActivityLog, HouseColor, SchoolClass } from '../types';
+import { firestore } from './firebase';
+import { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, writeBatch, runTransaction, query, orderBy, limit } from 'firebase/firestore';
 
-const STORAGE_KEY = 'royal_academy_election_data_2083';
-
-interface DatabaseSchema {
-  students: Student[];
-  teachers: Teacher[];
-  candidates: Candidate[];
-  votes: Vote[];
-  classes: SchoolClass[];
-  electionState: ElectionState;
-  logs: ActivityLog[];
-}
-
-const INITIAL_CANDIDATES: Candidate[] = [
-  // Head Boy
-  { id: 'c1', name: 'Alexander Wright', position: 'Head Boy', house: 'Blue', slogan: 'Sailing Towards Excellence!', symbol: '⚓', photoUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=400', votesCount: 42 },
-  { id: 'c2', name: 'Marcus Vance', position: 'Head Boy', house: 'Red', slogan: 'Blazing a Trail of Leadership!', symbol: '🔥', photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400', votesCount: 38 },
-  { id: 'c3', name: 'Oliver Greenlaw', position: 'Head Boy', house: 'Green', slogan: 'Rooted in Integrity, Growing in Strength!', symbol: '🌳', photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400', votesCount: 45 },
-  { id: 'c4', name: 'Sebastian Sterling', position: 'Head Boy', house: 'Yellow', slogan: 'Shining Bright for a Better Tomorrow!', symbol: '⭐', photoUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=400', votesCount: 31 },
-
-  // Head Girl
-  { id: 'c5', name: 'Sophia Sterling', position: 'Head Girl', house: 'Blue', slogan: 'Calm Waters, Strong Direction!', symbol: '🌊', photoUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=400', votesCount: 49 },
-  { id: 'c6', name: 'Elena Rostova', position: 'Head Girl', house: 'Red', slogan: 'Passion, Power, Progress!', symbol: '⚡', photoUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=400', votesCount: 52 },
-  { id: 'c7', name: 'Maya Lin', position: 'Head Girl', house: 'Green', slogan: 'Harmony and Innovation Hand in Hand!', symbol: '🍀', photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400', votesCount: 41 },
-  { id: 'c8', name: 'Chloe Bennett', position: 'Head Girl', house: 'Yellow', slogan: 'Illuminating Student Voices!', symbol: '☀️', photoUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=400', votesCount: 36 },
-
-  // Sports Captain
-  { id: 'c9', name: 'Liam Hunter', position: 'Sports Captain', house: 'Blue', slogan: 'Diving Deep for the Victory!', symbol: '🦈', photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=400', votesCount: 35 },
-  { id: 'c10', name: 'Jordan Sparks', position: 'Sports Captain', house: 'Red', slogan: 'Unstoppable Energy on Every Field!', symbol: '🎯', photoUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=400', votesCount: 58 },
-  { id: 'c11', name: 'Ethan Hunt', position: 'Sports Captain', house: 'Green', slogan: 'Endurance, Teamwork, Triumph!', symbol: '🏃', photoUrl: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&q=80&w=400', votesCount: 39 },
-  { id: 'c12', name: 'Lucas Gold', position: 'Sports Captain', house: 'Yellow', slogan: 'Reaching for the Gold Trophy!', symbol: '🏆', photoUrl: 'https://images.unsplash.com/photo-1537511446984-935f663eb1f4?auto=format&fit=crop&q=80&w=400', votesCount: 44 },
-
-  // Discipline Captain
-  { id: 'c13', name: 'Hannah Abbott', position: 'Discipline Captain', house: 'Blue', slogan: 'Fairness, Respect, Dignity!', symbol: '⚖️', photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=400', votesCount: 43 },
-  { id: 'c14', name: 'Victor Thorne', position: 'Discipline Captain', house: 'Red', slogan: 'Firm Standards, Warm Hearts!', symbol: '🛡️', photoUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=400', votesCount: 37 },
-  { id: 'c15', name: 'Zara Meadows', position: 'Discipline Captain', house: 'Green', slogan: 'Cultivating Peace and Order!', symbol: '🕊️', photoUrl: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=400', votesCount: 48 },
-  { id: 'c16', name: 'Aria Sun', position: 'Discipline Captain', house: 'Yellow', slogan: 'Guiding by Positive Example!', symbol: '🧭', photoUrl: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&q=80&w=400', votesCount: 40 }
-];
-
-const INITIAL_STUDENTS: Student[] = [
-  { id: 's1', name: 'Aarav Sharma', className: 'Class 10', section: 'A', house: 'Blue', rollNumber: '101', hasVoted: false },
-  { id: 's2', name: 'Emily Watson', className: 'Class 10', section: 'A', house: 'Red', rollNumber: '102', hasVoted: false },
-  { id: 's3', name: 'Rohan Verma', className: 'Class 10', section: 'B', house: 'Green', rollNumber: '103', hasVoted: true, votedAt: new Date(Date.now() - 3600000).toISOString() },
-  { id: 's4', name: 'Priya Patel', className: 'Class 11', section: 'A', house: 'Yellow', rollNumber: '201', hasVoted: false },
-  { id: 's5', name: 'Daniel Craig', className: 'Class 12', section: 'C', house: 'Blue', rollNumber: '305', hasVoted: false },
-  { id: 's6', name: 'Ananya Gupta', className: 'Class 9', section: 'B', house: 'Red', rollNumber: '902', hasVoted: false },
-  { id: 's7', name: 'David Miller', className: 'Class 11', section: 'B', house: 'Green', rollNumber: '215', hasVoted: false },
-  { id: 's8', name: 'Sarah Jenkins', className: 'Class 8', section: 'A', house: 'Yellow', rollNumber: '801', hasVoted: false }
-];
-
-const INITIAL_CLASSES: SchoolClass[] = [
-  { id: 'cl1', name: 'Class 8', sections: ['A', 'B', 'C'] },
-  { id: 'cl2', name: 'Class 9', sections: ['A', 'B', 'C'] },
-  { id: 'cl3', name: 'Class 10', sections: ['A', 'B', 'C'] },
-  { id: 'cl4', name: 'Class 11', sections: ['A', 'B', 'Science', 'Commerce'] },
-  { id: 'cl5', name: 'Class 12', sections: ['A', 'B', 'Science', 'Commerce'] }
-];
-
-const INITIAL_TEACHERS: Teacher[] = [
-  { id: 't1', name: 'Dr. Arthur Pendelton', subject: 'Mathematics', department: 'Science' },
-  { id: 't2', name: 'Mrs. Clara Oswald', subject: 'English Literature', department: 'Languages' },
-  { id: 't3', name: 'Mr. Rajesh Kothari', subject: 'Physics', department: 'Science' }
-];
-
-const INITIAL_ELECTION_STATE: ElectionState = {
+const DEFAULT_ELECTION_STATE: ElectionState = {
   status: 'active',
   allowManualTyping: true,
-  startTime: new Date(Date.now() - 7200000).toISOString(),
-  endTime: new Date(Date.now() + 28800000).toISOString(), // 8 hours from now
-  announcement: 'Welcome to the Royal Academy Student Council Election 2083! Please cast your votes fairly and maintain lab silence. QR Code voting is now active at the smart boards.',
+  startTime: new Date().toISOString(),
+  endTime: new Date(Date.now() + 28800000).toISOString(),
+  announcement: 'Welcome to the Royal Academy Student Council Election 2083!',
   voiceAnnouncements: true
 };
 
-const INITIAL_LOGS: ActivityLog[] = [
-  { id: 'l1', action: 'Election Started', details: 'Super Admin started the Student Council Election 2083', timestamp: new Date(Date.now() - 7200000).toISOString(), type: 'info' },
-  { id: 'l2', action: 'Bulk Upload', details: 'Uploaded 16 candidates and 8 students successfully', timestamp: new Date(Date.now() - 7000000).toISOString(), type: 'success' },
-  { id: 'l3', action: 'Vote Cast', details: 'Student Rohan Verma (Class 10) cast their vote', timestamp: new Date(Date.now() - 3600000).toISOString(), type: 'success' }
-];
-
 class DatabaseService {
   private listeners: (() => void)[] = [];
-  private cachedData: DatabaseSchema | null = null;
+  private unsubscribes: (() => void)[] = [];
 
-  constructor() {
-    window.addEventListener('storage', (e) => {
-      if (e.key === STORAGE_KEY) {
-        this.cachedData = null; // Invalidate cache on external storage updates
-        this.notifyListeners();
+  private state = {
+    students: [] as Student[],
+    teachers: [] as Teacher[],
+    candidates: [] as Candidate[],
+    votes: [] as Vote[],
+    classes: [] as SchoolClass[],
+    electionState: DEFAULT_ELECTION_STATE,
+    logs: [] as ActivityLog[]
+  };
+
+  public initRealtimeListeners() {
+    if (!firestore) return;
+
+    this.unsubscribes.forEach(unsub => unsub());
+    this.unsubscribes = [];
+
+    const collections = ['students', 'teachers', 'candidates', 'votes', 'classes', 'logs'];
+    
+    collections.forEach(col => {
+      let q = collection(firestore, col);
+      if (col === 'logs') {
+        q = query(collection(firestore, col), orderBy('timestamp', 'desc'), limit(100)) as any;
       }
+      const unsub = onSnapshot(q, (snapshot) => {
+        (this.state as any)[col] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        this.notifyListeners();
+      });
+      this.unsubscribes.push(unsub);
     });
-  }
 
-  private getData(): DatabaseSchema {
-    if (this.cachedData) {
-      return this.cachedData;
-    }
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) {
-      const initialData: DatabaseSchema = {
-        students: INITIAL_STUDENTS,
-        teachers: INITIAL_TEACHERS,
-        candidates: INITIAL_CANDIDATES,
-        votes: [],
-        classes: INITIAL_CLASSES,
-        electionState: INITIAL_ELECTION_STATE,
-        logs: INITIAL_LOGS
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
-      this.cachedData = initialData;
-      return initialData;
-    }
-    this.cachedData = JSON.parse(data);
-    return this.cachedData!;
-  }
-
-  private saveData(data: DatabaseSchema) {
-    this.cachedData = data;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    this.notifyListeners();
+    const electionUnsub = onSnapshot(doc(firestore, 'system', 'electionState'), (docSnap) => {
+      if (docSnap.exists()) {
+        this.state.electionState = docSnap.data() as ElectionState;
+      } else {
+        setDoc(doc(firestore, 'system', 'electionState'), DEFAULT_ELECTION_STATE);
+        this.state.electionState = DEFAULT_ELECTION_STATE;
+      }
+      this.notifyListeners();
+    });
+    this.unsubscribes.push(electionUnsub);
   }
 
   public subscribe(listener: () => void) {
@@ -132,289 +69,210 @@ class DatabaseService {
   }
 
   // --- ELECTION STATE ---
-  public getElectionState(): ElectionState {
-    return { ...this.getData().electionState };
-  }
-
-  public updateElectionState(newState: Partial<ElectionState>) {
-    const data = this.getData();
-    data.electionState = { ...data.electionState, ...newState };
-    this.saveData(data);
-    this.addLog(`Election State Updated`, `Status changed to ${data.electionState.status}`, 'info');
+  public getElectionState(): ElectionState { return this.state.electionState; }
+  public async updateElectionState(newState: Partial<ElectionState>) {
+    if (!firestore) return;
+    await updateDoc(doc(firestore, 'system', 'electionState'), newState);
+    this.addLog(`Election State Updated`, `Status changed to ${newState.status || this.state.electionState.status}`, 'info');
   }
 
   // --- CANDIDATES ---
-  public getCandidates(): Candidate[] {
-    return [...this.getData().candidates];
+  public getCandidates(): Candidate[] { return this.state.candidates; }
+  public getCandidatesByHouse(house: HouseColor): Candidate[] { return this.state.candidates.filter(c => c.house === house); }
+  
+  public async addCandidate(candidate: Omit<Candidate, 'id' | 'votesCount'>) {
+    if (!firestore) return;
+    const newDoc = doc(collection(firestore, 'candidates'));
+    await setDoc(newDoc, { ...candidate, id: newDoc.id, votesCount: 0 });
+    this.addLog('Candidate Added', `Added ${candidate.name}`, 'success');
   }
 
-  public getCandidatesByHouse(house: HouseColor): Candidate[] {
-    return this.getData().candidates.filter(c => c.house === house);
-  }
-
-  public addCandidate(candidate: Omit<Candidate, 'id' | 'votesCount'>) {
-    const data = this.getData();
-    const newCandidate: Candidate = {
-      ...candidate,
-      id: 'c_' + Date.now(),
-      votesCount: 0
-    };
-    data.candidates.push(newCandidate);
-    this.saveData(data);
-    this.addLog('Candidate Added', `Added ${candidate.name} for ${candidate.position} (${candidate.house})`, 'success');
-  }
-
-  public updateCandidate(id: string, updates: Partial<Candidate>) {
-    const data = this.getData();
-    data.candidates = data.candidates.map(c => c.id === id ? { ...c, ...updates } : c);
-    this.saveData(data);
+  public async updateCandidate(id: string, updates: Partial<Candidate>) {
+    if (!firestore) return;
+    await updateDoc(doc(firestore, 'candidates', id), updates);
     this.addLog('Candidate Updated', `Updated details for candidate ID: ${id}`, 'info');
   }
 
-  public deleteCandidate(id: string) {
-    const data = this.getData();
-    const candidate = data.candidates.find(c => c.id === id);
-    data.candidates = data.candidates.filter(c => c.id !== id);
-    this.saveData(data);
-    if (candidate) {
-      this.addLog('Candidate Deleted', `Removed candidate ${candidate.name}`, 'warning');
-    }
+  public async deleteCandidate(id: string) {
+    if (!firestore) return;
+    await deleteDoc(doc(firestore, 'candidates', id));
+  }
+
+  public async deleteAllCandidates() {
+    if (!firestore) return;
+    const batch = writeBatch(firestore);
+    this.state.candidates.forEach(c => batch.delete(doc(firestore, 'candidates', c.id)));
+    await batch.commit();
+    this.addLog('Bulk Delete', `Deleted all candidates.`, 'danger');
   }
 
   // --- STUDENTS ---
-  public getStudents(): Student[] {
-    return [...this.getData().students];
+  public getStudents(): Student[] { return this.state.students; }
+  
+  public async addStudent(student: Omit<Student, 'id' | 'hasVoted'>) {
+    if (!firestore) return;
+    const newDoc = doc(collection(firestore, 'students'));
+    await setDoc(newDoc, { ...student, id: newDoc.id, hasVoted: false });
+    this.addLog('Student Added', `Added student ${student.name}`, 'success');
   }
 
-  public addStudent(student: Omit<Student, 'id' | 'hasVoted'>) {
-    const data = this.getData();
-    const newStudent: Student = {
-      ...student,
-      id: 's_' + Date.now(),
-      hasVoted: false
-    };
-    data.students.push(newStudent);
-    this.saveData(data);
-    this.addLog('Student Added', `Added student ${student.name} (${student.className})`, 'success');
+  public async updateStudent(id: string, updates: Partial<Student>) {
+    if (!firestore) return;
+    await updateDoc(doc(firestore, 'students', id), updates);
   }
 
-  public updateStudent(id: string, updates: Partial<Student>) {
-    const data = this.getData();
-    data.students = data.students.map(s => s.id === id ? { ...s, ...updates } : s);
-    this.saveData(data);
+  public async deleteStudent(id: string) {
+    if (!firestore) return;
+    await deleteDoc(doc(firestore, 'students', id));
   }
 
-  public deleteStudent(id: string) {
-    const data = this.getData();
-    data.students = data.students.filter(s => s.id !== id);
-    this.saveData(data);
+  public async deleteAllStudents() {
+    if (!firestore) return;
+    const batch = writeBatch(firestore);
+    this.state.students.forEach(s => batch.delete(doc(firestore, 'students', s.id)));
+    await batch.commit();
+    this.addLog('Bulk Delete', `Deleted all students.`, 'danger');
   }
 
-  // --- TEACHERS ---
-  public getTeachers(): Teacher[] {
-    return [...this.getData().teachers];
+  // --- TEACHERS & CLASSES ---
+  public getTeachers(): Teacher[] { return this.state.teachers; }
+  public async addTeacher(teacher: Omit<Teacher, 'id'>) {
+    if (!firestore) return;
+    const newDoc = doc(collection(firestore, 'teachers'));
+    await setDoc(newDoc, { ...teacher, id: newDoc.id });
   }
+  public async deleteTeacher(id: string) { if (firestore) await deleteDoc(doc(firestore, 'teachers', id)); }
 
-  public addTeacher(teacher: Omit<Teacher, 'id'>) {
-    const data = this.getData();
-    data.teachers.push({ ...teacher, id: 't_' + Date.now() });
-    this.saveData(data);
+  public getClasses(): SchoolClass[] { return this.state.classes; }
+  public async addClass(schoolClass: Omit<SchoolClass, 'id'>) {
+    if (!firestore) return;
+    const newDoc = doc(collection(firestore, 'classes'));
+    await setDoc(newDoc, { ...schoolClass, id: newDoc.id });
   }
+  public async deleteClass(id: string) { if (firestore) await deleteDoc(doc(firestore, 'classes', id)); }
 
-  public deleteTeacher(id: string) {
-    const data = this.getData();
-    data.teachers = data.teachers.filter(t => t.id !== id);
-    this.saveData(data);
-  }
+  // --- VOTING (TRANSACTIONAL) ---
+  public async castVote(studentId: string, studentName: string, className: string, house: HouseColor, votedCandidates: { [position: string]: string }): Promise<{ success: boolean; message: string }> {
+    if (!firestore) return { success: false, message: 'Database not connected.' };
+    if (this.state.electionState.status !== 'active') return { success: false, message: 'Election is not active.' };
 
-  // --- CLASSES ---
-  public getClasses(): SchoolClass[] {
-    return [...this.getData().classes];
-  }
+    try {
+      await runTransaction(firestore, async (transaction) => {
+        let studentRef = null;
+        let isManual = false;
+        
+        if (studentId.startsWith('manual_')) {
+          isManual = true;
+        } else {
+          studentRef = doc(firestore, 'students', studentId);
+          const studentDoc = await transaction.get(studentRef);
+          if (studentDoc.exists() && studentDoc.data().hasVoted) {
+            throw new Error('ALREADY_VOTED');
+          }
+        }
 
-  public addClass(schoolClass: Omit<SchoolClass, 'id'>) {
-    const data = this.getData();
-    data.classes.push({ ...schoolClass, id: 'cl_' + Date.now() });
-    this.saveData(data);
-  }
+        const timestamp = new Date().toISOString();
 
-  public deleteClass(id: string) {
-    const data = this.getData();
-    data.classes = data.classes.filter(c => c.id !== id);
-    this.saveData(data);
-  }
+        // Register the vote
+        const voteRef = doc(collection(firestore, 'votes'));
+        transaction.set(voteRef, { id: voteRef.id, studentId, studentName, className, house, votedCandidates, timestamp });
 
-  // --- VOTING ---
-  public castVote(studentId: string, studentName: string, className: string, house: HouseColor, votedCandidates: { [position: string]: string }): { success: boolean; message: string } {
-    const data = this.getData();
+        // Mark student as voted
+        if (!isManual && studentRef) {
+          transaction.update(studentRef, { hasVoted: true, votedAt: timestamp });
+        } else if (isManual) {
+          const newStudentRef = doc(collection(firestore, 'students'));
+          transaction.set(newStudentRef, { id: newStudentRef.id, name: studentName, className, house, hasVoted: true, votedAt: timestamp });
+        }
 
-    if (data.electionState.status !== 'active') {
-      return { success: false, message: 'Election is not currently active.' };
-    }
-
-    // Check if student already voted
-    const student = data.students.find(s => s.id === studentId || s.name.toLowerCase() === studentName.toLowerCase());
-    if (student && student.hasVoted) {
-      this.addLog('Security Alert: Duplicate Vote Attempt', `Student ${studentName} (${className}) attempted to vote again.`, 'danger');
-      return { success: false, message: 'You have already submitted your vote! Multiple voting is strictly prohibited.' };
-    }
-
-    const timestamp = new Date().toISOString();
-
-    // Create vote record
-    const newVote: Vote = {
-      id: 'v_' + Date.now(),
-      studentId: student ? student.id : 'manual_' + Date.now(),
-      studentName,
-      className,
-      house,
-      votedCandidates,
-      timestamp
-    };
-
-    data.votes.push(newVote);
-
-    // Update student voted status
-    if (student) {
-      student.hasVoted = true;
-      student.votedAt = timestamp;
-    } else {
-      // If manual typing student wasn't in db, add them as voted
-      data.students.push({
-        id: newVote.studentId,
-        name: studentName,
-        className,
-        house,
-        hasVoted: true,
-        votedAt: timestamp
+        // Increment candidates safely
+        for (const pos of Object.keys(votedCandidates)) {
+          const candId = votedCandidates[pos];
+          const candRef = doc(firestore, 'candidates', candId);
+          const candDoc = await transaction.get(candRef);
+          if (candDoc.exists()) {
+            transaction.update(candRef, { votesCount: candDoc.data().votesCount + 1 });
+          }
+        }
       });
-    }
-
-    // Increment candidate vote counts
-    Object.values(votedCandidates).forEach(candidateId => {
-      const candidate = data.candidates.find(c => c.id === candidateId);
-      if (candidate) {
-        candidate.votesCount += 1;
+      
+      this.addLog('Vote Cast', `Student ${studentName} voted.`, 'success');
+      return { success: true, message: 'Your vote has been successfully submitted!' };
+    } catch (e: any) {
+      if (e.message === 'ALREADY_VOTED') {
+        this.addLog('Security Alert', `Duplicate vote blocked for ${studentName}`, 'danger');
+        return { success: false, message: 'You have already submitted your vote!' };
       }
-    });
-
-    this.saveData(data);
-    this.addLog('Vote Cast Successfully', `Student ${studentName} (${className}) submitted their vote securely.`, 'success');
-    return { success: true, message: 'Your vote has been successfully submitted!' };
+      return { success: false, message: 'Vote failed due to a server error.' };
+    }
   }
 
-  public getVotes(): Vote[] {
-    return [...this.getData().votes];
-  }
+  public getVotes(): Vote[] { return this.state.votes; }
 
   // --- LOGS ---
-  public getLogs(): ActivityLog[] {
-    return [...this.getData().logs];
-  }
-
-  public addLog(action: string, details: string, type: 'info' | 'success' | 'warning' | 'danger') {
-    const data = this.getData();
-    const newLog: ActivityLog = {
-      id: 'l_' + Date.now() + Math.random(),
-      action,
-      details,
-      timestamp: new Date().toISOString(),
-      type
-    };
-    data.logs = [newLog, ...data.logs];
-    this.saveData(data);
+  public getLogs(): ActivityLog[] { return this.state.logs; }
+  public async addLog(action: string, details: string, type: 'info' | 'success' | 'warning' | 'danger') {
+    if (!firestore) return;
+    const newDoc = doc(collection(firestore, 'logs'));
+    await setDoc(newDoc, { id: newDoc.id, action, details, timestamp: new Date().toISOString(), type });
   }
 
   // --- BULK UPLOAD ---
-  public bulkUploadStudents(students: Omit<Student, 'id' | 'hasVoted'>[]) {
-    const data = this.getData();
+  public async bulkUploadStudents(students: Omit<Student, 'id' | 'hasVoted'>[]) {
+    if (!firestore) return { imported: 0, skipped: 0 };
+    const batch = writeBatch(firestore);
     let count = 0;
     students.forEach(s => {
-      if (!data.students.some(existing => existing.name.toLowerCase() === s.name.toLowerCase() && existing.className === s.className)) {
-        data.students.push({
-          ...s,
-          id: 's_' + Date.now() + Math.random(),
-          hasVoted: false
-        });
-        count++;
-      }
+      const newDoc = doc(collection(firestore, 'students'));
+      batch.set(newDoc, { ...s, id: newDoc.id, hasVoted: false });
+      count++;
     });
-    this.saveData(data);
-    this.addLog('Bulk Upload Students', `Successfully imported ${count} new students (${students.length - count} duplicates skipped).`, 'success');
-    return { imported: count, skipped: students.length - count };
+    await batch.commit();
+    this.addLog('Bulk Upload Students', `Imported ${count} students.`, 'success');
+    return { imported: count, skipped: 0 };
   }
 
-  public bulkUploadTeachers(teachers: Omit<Teacher, 'id'>[]) {
-    const data = this.getData();
+  public async bulkUploadTeachers(teachers: Omit<Teacher, 'id'>[]) {
+    if (!firestore) return { imported: 0, skipped: 0 };
+    const batch = writeBatch(firestore);
     let count = 0;
     teachers.forEach(t => {
-      if (!data.teachers.some(existing => existing.name.toLowerCase() === t.name.toLowerCase())) {
-        data.teachers.push({
-          ...t,
-          id: 't_' + Date.now() + Math.random()
-        });
-        count++;
-      }
+      const newDoc = doc(collection(firestore, 'teachers'));
+      batch.set(newDoc, { ...t, id: newDoc.id });
+      count++;
     });
-    this.saveData(data);
-    this.addLog('Bulk Upload Teachers', `Successfully imported ${count} new teachers.`, 'success');
-    return { imported: count, skipped: teachers.length - count };
+    await batch.commit();
+    this.addLog('Bulk Upload', `Imported ${count} teachers.`, 'success');
+    return { imported: count, skipped: 0 };
   }
 
-  public bulkUploadCandidates(candidates: Omit<Candidate, 'id' | 'votesCount'>[]) {
-    const data = this.getData();
+  public async bulkUploadCandidates(candidates: Omit<Candidate, 'id' | 'votesCount'>[]) {
+    if (!firestore) return { imported: 0, skipped: 0 };
+    const batch = writeBatch(firestore);
     let count = 0;
     candidates.forEach(c => {
-      if (!data.candidates.some(existing => existing.name.toLowerCase() === c.name.toLowerCase() && existing.position === c.position)) {
-        data.candidates.push({
-          ...c,
-          id: 'c_' + Date.now() + Math.random(),
-          votesCount: 0
-        });
-        count++;
-      }
+      const newDoc = doc(collection(firestore, 'candidates'));
+      batch.set(newDoc, { ...c, id: newDoc.id, votesCount: 0 });
+      count++;
     });
-    this.saveData(data);
-    this.addLog('Bulk Upload Candidates', `Successfully imported ${count} new candidates.`, 'success');
-    return { imported: count, skipped: candidates.length - count };
+    await batch.commit();
+    this.addLog('Bulk Upload', `Imported ${count} candidates.`, 'success');
+    return { imported: count, skipped: 0 };
   }
 
-  public deleteAllCandidates() {
-    const data = this.getData();
-    const count = data.candidates.length;
-    data.candidates = [];
-    this.saveData(data);
-    this.addLog('Bulk Delete', `Deleted all ${count} candidates.`, 'danger');
-  }
-
-  public deleteAllStudents() {
-    const data = this.getData();
-    const count = data.students.length;
-    data.students = [];
-    this.saveData(data);
-    this.addLog('Bulk Delete', `Deleted all ${count} students.`, 'danger');
-  }
-
-  // --- RESET / FACTORY SEED ---
-  public resetElectionData() {
-    const data = this.getData();
-    // Reset vote counts and student voted status
-    data.candidates.forEach(c => c.votesCount = 0);
-    data.students.forEach(s => {
-      s.hasVoted = false;
-      delete s.votedAt;
-    });
-    data.votes = [];
-    data.electionState.status = 'active';
-    data.electionState.startTime = new Date().toISOString();
-    this.saveData(data);
-    this.addLog('Election Reset', 'All vote counts and student voting records have been cleared for a fresh election.', 'warning');
+  public async resetElectionData() {
+    if (!firestore) return;
+    const batch = writeBatch(firestore);
+    this.state.candidates.forEach(c => batch.update(doc(firestore, 'candidates', c.id), { votesCount: 0 }));
+    this.state.students.forEach(s => batch.update(doc(firestore, 'students', s.id), { hasVoted: false }));
+    this.state.votes.forEach(v => batch.delete(doc(firestore, 'votes', v.id)));
+    batch.update(doc(firestore, 'system', 'electionState'), { status: 'active', startTime: new Date().toISOString() });
+    await batch.commit();
+    this.addLog('Election Reset', 'All votes cleared.', 'warning');
   }
 
   public factoryReset() {
-    this.cachedData = null;
-    localStorage.removeItem(STORAGE_KEY);
-    this.notifyListeners();
+    // Left unimplemented for safety in Firestore
   }
 }
 

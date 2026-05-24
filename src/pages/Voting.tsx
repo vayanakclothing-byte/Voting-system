@@ -53,8 +53,8 @@ export const Voting: React.FC = () => {
     setIsConfirmModalOpen(true);
   };
 
-  const handleFinalConfirmVote = () => {
-    const result = castStudentVote(selections);
+  const handleFinalConfirmVote = async () => {
+    const result = await castStudentVote(selections);
     setIsConfirmModalOpen(false);
 
     if (result.success) {
