@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '../services/db';
 import { Student, Teacher, Candidate, Vote, ElectionState, ActivityLog, HouseColor, SchoolClass } from '../types';
 import toast from 'react-hot-toast';
+import { auth } from '../services/firebase';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 interface StudentSession {
   id?: string;
@@ -33,8 +35,8 @@ interface AppContextType {
   // Methods
   loginStudent: (session: StudentSession) => boolean;
   logoutStudent: () => void;
-  loginAdmin: (pin: string) => boolean;
-  logoutAdmin: () => void;
+  loginAdmin: (email: string, pass: string) => Promise<boolean>;
+  logoutAdmin: () => Promise<void>;
   setSelectedHouse: (house: HouseColor | null) => void;
   toggleFullscreen: () => void;
   toggleDarkMode: () => void;
@@ -59,9 +61,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : null;
   });
 
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
-    return sessionStorage.getItem('isAdminLoggedIn') === 'true';
-  });
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
 
   const [selectedHouse, setSelectedHouse] = useState<HouseColor | null>(() => {
     return currentStudent ? currentStudent.house : null;
@@ -83,10 +83,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     refreshData();
-    const unsubscribe = db.subscribe(() => {
+    const unsubscribeDb = db.subscribe(() => {
       refreshData();
     });
-    return () => unsubscribe();
+    
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      setIsAdminLoggedIn(!!user);
+    });
+
+    return () => {
+      unsubscribeDb();
+      unsubscribeAuth();
+    };
   }, []);
 
   // Update house theme when current student changes
@@ -129,25 +137,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     sessionStorage.removeItem('currentStudentSession');
   };
 
-  const loginAdmin = (pin: string): boolean => {
-    // Simple secure PIN for demo/school lab environment
-    if (pin === '2083' || pin === 'admin') {
-      setIsAdminLoggedIn(true);
-      sessionStorage.setItem('isAdminLoggedIn', 'true');
+  const loginAdmin = async (email: string, pass: string): Promise<boolean> => {
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
       toast.success('Admin authenticated successfully');
-      db.addLog('Admin Login', 'Admin dashboard accessed', 'info');
+      db.addLog('Admin Login', 'Admin dashboard accessed via Firebase', 'info');
       return true;
-    } else {
-      toast.error('Invalid Admin PIN');
-      db.addLog('Failed Admin Login Attempt', 'Incorrect PIN entered', 'warning');
+    } catch (error: any) {
+      toast.error('Invalid Credentials: ' + error.message);
+      db.addLog('Failed Admin Login Attempt', 'Incorrect credentials entered', 'warning');
       return false;
     }
   };
 
-  const logoutAdmin = () => {
-    setIsAdminLoggedIn(false);
-    sessionStorage.removeItem('isAdminLoggedIn');
-    toast.success('Admin logged out');
+  const logoutAdmin = async (): Promise<void> => {
+    try {
+      await signOut(auth);
+      toast.success('Admin logged out');
+    } catch (error: any) {
+      toast.error('Logout failed: ' + error.message);
+    }
   };
 
   const toggleFullscreen = () => {
