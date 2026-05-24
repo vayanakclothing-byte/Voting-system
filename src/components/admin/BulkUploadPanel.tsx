@@ -19,9 +19,9 @@ export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData })
     let wsData: any[] = [];
     if (bulkType === 'students') {
       wsData = [
-        ['Student Name', 'Class', 'Section', 'House Color', 'Roll Number'],
-        ['John Doe', 'Class 10', 'A', 'Blue', '101'],
-        ['Jane Smith', 'Class 10', 'B', 'Red', '102']
+        ['Student Name', 'Class', 'Section', 'Roll Number'],
+        ['John Doe', 'Class 10', 'A', '101'],
+        ['Jane Smith', 'Class 10', 'B', '102']
       ];
     } else if (bulkType === 'teachers') {
       wsData = [

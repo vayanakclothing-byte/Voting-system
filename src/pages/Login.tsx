@@ -30,17 +30,31 @@ export const Login: React.FC = () => {
   // Filter students based on class selection
   const classStudents = useMemo(() => {
     if (!selectedClass) return [];
-    let filtered = students.filter(s => s.className === selectedClass);
+    const targetClass = selectedClass.trim().toLowerCase();
+    let filtered = students.filter(s => (s.className || '').trim().toLowerCase() === targetClass);
+    
     if (selectedSection) {
-      filtered = filtered.filter(s => s.section === selectedSection);
+      const targetSection = selectedSection.trim().toLowerCase();
+      filtered = filtered.filter(s => (s.section || '').trim().toLowerCase() === targetSection);
     }
-    return filtered;
+    return filtered.sort((a, b) => a.name.localeCompare(b.name));
   }, [students, selectedClass, selectedSection]);
 
   const availableSections = useMemo(() => {
+    if (!selectedClass) return [];
+    
+    // First try to get from Classes database config
     const cls = classes.find(c => c.name === selectedClass);
-    return cls?.sections || [];
-  }, [classes, selectedClass]);
+    if (cls && cls.sections && cls.sections.length > 0) {
+      return cls.sections;
+    }
+    
+    // Fallback: derive unique sections from the students themselves
+    const targetClass = selectedClass.trim().toLowerCase();
+    const studentsInClass = students.filter(s => (s.className || '').trim().toLowerCase() === targetClass);
+    const uniqueSections = Array.from(new Set(studentsInClass.map(s => (s.section || '').trim()).filter(Boolean)));
+    return uniqueSections.sort();
+  }, [classes, students, selectedClass]);
 
   // Auto-suggestion list while typing
   const suggestions = useMemo(() => {
