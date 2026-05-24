@@ -5,9 +5,6 @@ export const StudentSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   className: z.string().min(1, 'Class name is required'),
   section: z.string().optional(),
-  house: z.enum(['Blue', 'Red', 'Green', 'Yellow'], {
-    message: 'House must be Blue, Red, Green, or Yellow'
-  }),
   rollNumber: z.string().optional()
 });
 

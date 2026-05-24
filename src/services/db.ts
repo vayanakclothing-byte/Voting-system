@@ -182,7 +182,7 @@ class DatabaseService {
           transaction.update(studentRef, { hasVoted: true, votedAt: timestamp });
         } else if (isManual) {
           const newStudentRef = doc(collection(firestore, 'students'));
-          transaction.set(newStudentRef, { id: newStudentRef.id, name: studentName, className, house, hasVoted: true, votedAt: timestamp });
+          transaction.set(newStudentRef, { id: newStudentRef.id, name: studentName, className, hasVoted: true, votedAt: timestamp });
         }
 
         // Increment candidates safely

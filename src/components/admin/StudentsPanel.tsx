@@ -16,31 +16,30 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
   const [studName, setStudName] = useState('');
   const [studClass, setStudClass] = useState('');
   const [studSection, setStudSection] = useState('');
-  const [studHouse, setStudHouse] = useState<HouseColor>('Blue');
   const [studRoll, setStudRoll] = useState('');
 
   const handleOpenAddStudent = () => {
     setEditingStudentId(null);
-    setStudName(''); setStudClass(classes[0]?.name || 'Class 10'); setStudSection('A'); setStudHouse('Blue'); setStudRoll('');
+    setStudName(''); setStudClass(classes[0]?.name || 'Class 10'); setStudSection('A'); setStudRoll('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenEditStudent = (s: Student) => {
     setEditingStudentId(s.id);
-    setStudName(s.name); setStudClass(s.className); setStudSection(s.section || ''); setStudHouse(s.house); setStudRoll(s.rollNumber || '');
+    setStudName(s.name); setStudClass(s.className); setStudSection(s.section || ''); setStudRoll(s.rollNumber || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSaveStudent = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingStudentId) {
-      db.updateStudent(editingStudentId, { name: studName, className: studClass, section: studSection, house: studHouse, rollNumber: studRoll });
+      db.updateStudent(editingStudentId, { name: studName, className: studClass, section: studSection, rollNumber: studRoll });
     } else {
-      db.addStudent({ name: studName, className: studClass, section: studSection, house: studHouse, rollNumber: studRoll });
+      db.addStudent({ name: studName, className: studClass, section: studSection, rollNumber: studRoll });
     }
     refreshData();
     setEditingStudentId(null);
-    setStudName(''); setStudClass(classes[0]?.name || 'Class 10'); setStudSection('A'); setStudHouse('Blue'); setStudRoll('');
+    setStudName(''); setStudClass(classes[0]?.name || 'Class 10'); setStudSection('A'); setStudRoll('');
   };
 
   const handleDeleteStudent = (id: string) => {
@@ -55,7 +54,6 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
   };
 
   const [studentSearch, setStudentSearch] = useState('');
-  const [studentHouseFilter, setStudentHouseFilter] = useState('all');
   const [studentClassFilter, setStudentClassFilter] = useState('all');
   const [studentStatusFilter, setStudentStatusFilter] = useState('all');
   const [studentPage, setStudentPage] = useState(1);
@@ -67,17 +65,16 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
       const matchesSearch = s.name.toLowerCase().includes(searchLower) || 
                             (s.rollNumber && s.rollNumber.toLowerCase().includes(searchLower)) ||
                             (s.className && s.className.toLowerCase().includes(searchLower));
-      const matchesHouse = studentHouseFilter === 'all' || s.house === studentHouseFilter;
       const matchesClass = studentClassFilter === 'all' || s.className === studentClassFilter;
       const matchesStatus = studentStatusFilter === 'all' || 
                             (studentStatusFilter === 'voted' ? s.hasVoted : !s.hasVoted);
-      return matchesSearch && matchesHouse && matchesClass && matchesStatus;
+      return matchesSearch && matchesClass && matchesStatus;
     });
-  }, [students, studentSearch, studentHouseFilter, studentClassFilter, studentStatusFilter]);
+  }, [students, studentSearch, studentClassFilter, studentStatusFilter]);
 
   useEffect(() => {
     setStudentPage(1);
-  }, [studentSearch, studentHouseFilter, studentClassFilter, studentStatusFilter]);
+  }, [studentSearch, studentClassFilter, studentStatusFilter]);
 
   const paginatedStudents = useMemo(() => {
     const start = (studentPage - 1) * itemsPerPage;
@@ -107,12 +104,6 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">House Color</label>
-            <select value={studHouse} onChange={e => setStudHouse(e.target.value as any)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner">
-              <option value="Blue">Blue</option><option value="Red">Red</option><option value="Green">Green</option><option value="Yellow">Yellow</option>
-            </select>
-          </div>
-          <div>
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Roll No.</label>
             <input type="text" value={studRoll} onChange={e => setStudRoll(e.target.value)} placeholder="e.g. 101" className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner" />
           </div>
@@ -138,12 +129,6 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
             </select>
           </div>
           <div className="w-full md:w-48">
-            <select value={studentHouseFilter} onChange={e => setStudentHouseFilter(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs md:text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner">
-              <option value="all">All Houses</option>
-              <option value="Blue">Blue House</option><option value="Red">Red House</option><option value="Green">Green House</option><option value="Yellow">Yellow House</option>
-            </select>
-          </div>
-          <div className="w-full md:w-48">
             <select value={studentStatusFilter} onChange={e => setStudentStatusFilter(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs md:text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner">
               <option value="all">All Statuses</option>
               <option value="voted">Voted Only</option>
@@ -163,7 +148,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
             </button>
             <button onClick={() => {
               const ws = XLSX.utils.json_to_sheet(filteredStudents.map(s => ({
-                Name: s.name, Class: s.className, Section: s.section || 'N/A', House: s.house, 'Roll No': s.rollNumber || 'N/A', 'Voted Status': s.hasVoted ? 'VOTED' : 'PENDING'
+                Name: s.name, Class: s.className, Section: s.section || 'N/A', 'Roll No': s.rollNumber || 'N/A', 'Voted Status': s.hasVoted ? 'VOTED' : 'PENDING'
               })));
               const wb = XLSX.utils.book_new();
               XLSX.utils.book_append_sheet(wb, ws, "Voter Directory");
@@ -174,14 +159,13 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
           </div>
         </div>
         <table className="w-full text-left border-collapse min-w-[600px]">
-          <thead><tr className="border-b border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider"><th className="pb-4 pl-4">Name</th><th className="pb-4">Class</th><th className="pb-4">House</th><th className="pb-4">Roll No.</th><th className="pb-4">Voting Status</th><th className="pb-4 pr-4 text-right">Actions</th></tr></thead>
+          <thead><tr className="border-b border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider"><th className="pb-4 pl-4">Name</th><th className="pb-4">Class</th><th className="pb-4">Roll No.</th><th className="pb-4">Voting Status</th><th className="pb-4 pr-4 text-right">Actions</th></tr></thead>
           <tbody className="divide-y divide-slate-800/60 text-sm">
             {paginatedStudents.length > 0 ? (
               paginatedStudents.map(stud => (
                 <tr key={stud.id} className="hover:bg-slate-800/30 transition-colors">
                   <td className="py-4 pl-4 font-bold text-white">{stud.name}</td>
                   <td className="py-4 text-slate-300">{stud.className} {stud.section ? `(Sec ${stud.section})` : ''}</td>
-                  <td className="py-4"><span className={`text-xs px-2.5 py-1 rounded-lg border font-bold ${stud.house === 'Blue' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : stud.house === 'Red' ? 'bg-red-500/20 text-red-300 border-red-500/30' : stud.house === 'Green' ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'}`}>{stud.house}</span></td>
                   <td className="py-4 text-slate-400 font-mono">{stud.rollNumber || 'N/A'}</td>
                   <td className="py-4">{stud.hasVoted ? <span className="text-xs px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">Voted</span> : <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 font-bold">Pending</span>}</td>
                   <td className="py-4 pr-4 text-right space-x-2">

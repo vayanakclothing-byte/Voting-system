@@ -66,7 +66,6 @@ export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData })
         name: String(r['Student Name'] || r['name'] || ''),
         className: String(r['Class'] || r['className'] || ''),
         section: String(r['Section'] || r['section'] || ''),
-        house: ['Blue', 'Red', 'Green', 'Yellow'].includes(r['House Color']) ? r['House Color'] : 'Blue',
         rollNumber: String(r['Roll Number'] || r['rollNumber'] || '')
       }));
 

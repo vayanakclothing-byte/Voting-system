@@ -5,7 +5,6 @@ export interface Student {
   name: string;
   className: string;
   section?: string;
-  house: HouseColor;
   rollNumber?: string;
   hasVoted: boolean;
   votedAt?: string;

@@ -45,9 +45,8 @@ export const Login: React.FC = () => {
     setSelectedHouse(house); // Dynamically update entire UI theme
   };
 
-  const handleSelectSuggestedStudent = (name: string, house: HouseColor) => {
+  const handleSelectSuggestedStudent = (name: string) => {
     setStudentNameInput(name);
-    handleHouseSelection(house);
     setShowSuggestions(false);
   };
 
@@ -204,7 +203,7 @@ export const Login: React.FC = () => {
                       {suggestions.map(student => (
                         <li
                           key={student.id}
-                          onClick={() => handleSelectSuggestedStudent(student.name, student.house)}
+                          onClick={() => handleSelectSuggestedStudent(student.name)}
                           className="px-4 py-3 hover:bg-slate-800/80 cursor-pointer flex items-center justify-between text-sm transition-colors"
                         >
                           <div className="flex items-center gap-2">
@@ -214,14 +213,6 @@ export const Login: React.FC = () => {
                               <span className="text-xs text-slate-400">Sec {student.section}</span>
                             )}
                           </div>
-                          <span className={`text-xs px-2 py-0.5 rounded-lg border font-bold ${
-                            student.house === 'Blue' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' :
-                            student.house === 'Red' ? 'bg-red-500/20 text-red-300 border-red-500/30' :
-                            student.house === 'Green' ? 'bg-green-500/20 text-green-300 border-green-500/30' :
-                            'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
-                          }`}>
-                            {student.house}
-                          </span>
                         </li>
                       ))}
                     </motion.ul>
@@ -234,10 +225,6 @@ export const Login: React.FC = () => {
                 onChange={(e) => {
                   const selectedName = e.target.value;
                   setStudentNameInput(selectedName);
-                  const s = classStudents.find(st => st.name === selectedName);
-                  if (s) {
-                    handleHouseSelection(s.house);
-                  }
                 }}
                 className="w-full bg-slate-950/80 border border-slate-700/80 rounded-2xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
                 required
