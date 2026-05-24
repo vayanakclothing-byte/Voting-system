@@ -87,9 +87,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       refreshData();
     });
     
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = auth ? onAuthStateChanged(auth, (user) => {
       setIsAdminLoggedIn(!!user);
-    });
+    }) : () => {};
 
     return () => {
       unsubscribeDb();
@@ -138,6 +138,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const loginAdmin = async (email: string, pass: string): Promise<boolean> => {
+    if (!auth) {
+      toast.error('Firebase Auth is not configured. Please add environment variables.');
+      return false;
+    }
     try {
       await signInWithEmailAndPassword(auth, email, pass);
       toast.success('Admin authenticated successfully');
@@ -151,6 +155,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const logoutAdmin = async (): Promise<void> => {
+    if (!auth) return;
     try {
       await signOut(auth);
       toast.success('Admin logged out');
