@@ -73,7 +73,11 @@ export const Login: React.FC = () => {
     if (!selectedSection) return fetchedClassStudents;
     
     const targetSection = selectedSection.trim().toLowerCase();
-    return fetchedClassStudents.filter(s => (s.section || '').trim().toLowerCase() === targetSection);
+    return fetchedClassStudents.filter(s => {
+      const studSec = (s.section || '').trim().toLowerCase();
+      // Handle cases where a student might be assigned to multiple sections like "A, B"
+      return studSec === targetSection || studSec.split(',').map((x: string) => x.trim()).includes(targetSection);
+    });
   }, [fetchedClassStudents, selectedSection]);
 
   const availableSections = useMemo(() => {
@@ -86,7 +90,14 @@ export const Login: React.FC = () => {
     }
     
     // Fallback: derive unique sections from the students themselves
-    const uniqueSections = Array.from(new Set(fetchedClassStudents.map(s => (s.section || '').trim()).filter(Boolean)));
+    const extractedSections: string[] = [];
+    fetchedClassStudents.forEach(s => {
+      const sec = (s.section || '').trim();
+      if (sec) {
+        sec.split(',').forEach((part: string) => extractedSections.push(part.trim()));
+      }
+    });
+    const uniqueSections = Array.from(new Set(extractedSections.filter(Boolean)));
     return uniqueSections.sort();
   }, [classes, students, selectedClass, fetchedClassStudents]);
 

@@ -73,8 +73,8 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
           )}
 
           {/* Selections List */}
-          <div className="space-y-3 mb-8">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Your Chosen Candidates:</h3>
+          <div className="space-y-3 mb-8 max-h-[50vh] overflow-y-auto pr-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 sticky top-0 bg-slate-900/95 py-1 z-10">Your Chosen Candidates:</h3>
             {positions.map(pos => {
               const candidateId = selections[pos];
               const candidate = candidates.find(c => c.id === candidateId);
