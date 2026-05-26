@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FaPlus, FaSave, FaEdit, FaTrash } from 'react-icons/fa';
 import { db } from '../../services/db';
-import { Candidate, HouseColor } from '../../types';
+import { Candidate, HouseColor, GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../../types';
 
 interface CandidatesPanelProps {
   candidates: Candidate[];
@@ -81,10 +81,12 @@ export const CandidatesPanel: React.FC<CandidatesPanelProps> = ({ candidates, re
             <input type="text" value={candCustomPos} onChange={e => setCandCustomPos(e.target.value)} placeholder="e.g., Vice President" className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner" />
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 mt-4">Position</label>
             <select value={candPos} onChange={e => setCandPos(e.target.value as any)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner">
-              <option value="Head Boy">Head Boy</option>
-              <option value="Head Girl">Head Girl</option>
-              <option value="Sports Captain">Sports Captain</option>
-              <option value="Discipline Captain">Discipline Captain</option>
+               <optgroup label="School Leadership">
+                  {GLOBAL_POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}
+               </optgroup>
+               <optgroup label="House Positions">
+                  {HOUSE_POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}
+               </optgroup>
             </select>
           </div>
           <div>

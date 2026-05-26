@@ -5,6 +5,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pi
 import { FaTrophy, FaChartBar, FaChartPie, FaUsers, FaTv, FaSyncAlt, FaArrowLeft, FaMedal, FaClock } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import Confetti from 'react-confetti';
+import { GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../types';
 
 export const LiveResults: React.FC = () => {
   const { candidates, students, votes, electionState, refreshData } = useApp();
@@ -14,7 +15,7 @@ export const LiveResults: React.FC = () => {
   const [smartBoardMode, setSmartBoardMode] = useState<boolean>(false);
   const [celebrateWinners, setCelebrateWinners] = useState<boolean>(false);
 
-  const positions = ['Head Boy', 'Head Girl', 'Sports Captain', 'Discipline Captain'];
+  const positions = [...GLOBAL_POSITIONS, ...HOUSE_POSITIONS];
 
   // Calculate participation percentage
   const totalStudents = students.length;
@@ -235,6 +236,11 @@ export const LiveResults: React.FC = () => {
               return (
                 <section key={pos} className="glass-panel bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl">
                   {/* Position Header & Winner Highlight */}
+                  <div className="mb-4">
+                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-800 px-2 py-1 rounded-lg border border-slate-700">
+                        {GLOBAL_POSITIONS.includes(pos) ? "School Leadership" : "House Position"}
+                     </span>
+                  </div>
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-4 border-b border-slate-800">
                     <div>
                       <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight mb-1">{pos}</h2>

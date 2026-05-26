@@ -1,5 +1,8 @@
 export type HouseColor = 'Blue' | 'Red' | 'Green' | 'Yellow';
 
+export const GLOBAL_POSITIONS = ['Head Boy', 'Head Girl', 'Sports Captain', 'Discipline Captain'];
+export const HOUSE_POSITIONS = ['House Captain', 'House Vice Captain'];
+
 export interface Student {
   id: string;
   name: string;

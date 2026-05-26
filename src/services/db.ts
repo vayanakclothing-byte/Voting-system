@@ -1,6 +1,6 @@
-import { Student, Teacher, Candidate, Vote, ElectionState, ActivityLog, HouseColor, SchoolClass } from '../types';
+import { Student, Teacher, Candidate, Vote, ElectionState, ActivityLog, HouseColor, SchoolClass, GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../types';
 import { firestore } from './firebase';
-import { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, writeBatch, runTransaction, query, orderBy, limit } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, writeBatch, runTransaction, query, orderBy, limit, where, increment } from 'firebase/firestore';
 
 const DEFAULT_ELECTION_STATE: ElectionState = {
   status: 'active',
@@ -25,13 +25,15 @@ class DatabaseService {
     logs: [] as ActivityLog[]
   };
 
+  private studentsCache: { [className: string]: Student[] } = {};
+
   public initRealtimeListeners() {
     if (!firestore) return;
 
     this.unsubscribes.forEach(unsub => unsub());
     this.unsubscribes = [];
 
-    const collections = ['students', 'teachers', 'candidates', 'votes', 'classes', 'logs'];
+    const collections = ['teachers', 'candidates', 'votes', 'classes', 'logs'];
     
     collections.forEach(col => {
       let q = collection(firestore, col);
@@ -108,6 +110,38 @@ class DatabaseService {
 
   // --- STUDENTS ---
   public getStudents(): Student[] { return this.state.students; }
+
+  public async fetchStudentsByClass(className: string): Promise<Student[]> {
+    if (!firestore) return [];
+    
+    // Check local cache first
+    if (this.studentsCache[className]) {
+      this.state.students = this.studentsCache[className];
+      this.notifyListeners();
+      return this.studentsCache[className];
+    }
+
+    try {
+      const q = query(
+        collection(firestore, 'students'),
+        where('className', '==', className)
+      );
+      const snapshot = await getDocs(q);
+      const fetchedStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Student[];
+      
+      // Store in cache
+      this.studentsCache[className] = fetchedStudents;
+      
+      // Update state for current view
+      this.state.students = fetchedStudents;
+      this.notifyListeners();
+      
+      return fetchedStudents;
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      return [];
+    }
+  }
   
   public async addStudent(student: Omit<Student, 'id' | 'hasVoted'>) {
     if (!firestore) return;
@@ -162,6 +196,16 @@ class DatabaseService {
         let isManual = false;
         const collectionName = className === 'Teacher' ? 'teachers' : 'students';
         
+        // Validation: Verify all required positions are present.
+        // For students, both GLOBAL and HOUSE. For teachers, GLOBAL (and possibly HOUSE depending on rules, but we'll check based on what is expected)
+        const expectedPositions = className === 'Teacher' ? [...GLOBAL_POSITIONS, ...HOUSE_POSITIONS] : [...GLOBAL_POSITIONS, ...HOUSE_POSITIONS];
+        const votedPositionKeys = Object.keys(votedCandidates);
+        
+        const missingPositions = expectedPositions.filter(pos => !votedPositionKeys.includes(pos));
+        if (missingPositions.length > 0 && !isManual) { // manual could be a teacher making a quick exception, but let's enforce it broadly. Actually let's just warn or allow partial if we wanted, but prompt said prevent skipping required positions.
+             throw new Error(`MISSING_POSITIONS:${missingPositions.join(',')}`);
+        }
+        
         if (studentId.startsWith('manual_')) {
           isManual = true;
         } else {
@@ -190,10 +234,7 @@ class DatabaseService {
         for (const pos of Object.keys(votedCandidates)) {
           const candId = votedCandidates[pos];
           const candRef = doc(firestore, 'candidates', candId);
-          const candDoc = await transaction.get(candRef);
-          if (candDoc.exists()) {
-            transaction.update(candRef, { votesCount: candDoc.data().votesCount + 1 });
-          }
+          transaction.update(candRef, { votesCount: increment(1) });
         }
       });
       
@@ -203,6 +244,9 @@ class DatabaseService {
       if (e.message === 'ALREADY_VOTED') {
         this.addLog('Security Alert', `Duplicate vote blocked for ${studentName}`, 'danger');
         return { success: false, message: 'You have already submitted your vote!' };
+      }
+      if (e.message.startsWith('MISSING_POSITIONS')) {
+         return { success: false, message: 'You must vote for all required positions.' };
       }
       return { success: false, message: 'Vote failed due to a server error.' };
     }

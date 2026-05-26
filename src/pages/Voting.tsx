@@ -3,8 +3,9 @@ import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { CandidateCard } from '../components/CandidateCard';
 import { ConfirmVoteModal } from '../components/ConfirmVoteModal';
-import { FaUserShield, FaExclamationCircle, FaCheckCircle, FaUndoAlt, FaLock } from 'react-icons/fa';
-import { motion } from 'framer-motion';
+import { FaUserShield, FaExclamationCircle, FaCheckCircle, FaUndoAlt, FaLock, FaArrowRight, FaArrowLeft, FaSave } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../types';
 
 export const Voting: React.FC = () => {
   const {
@@ -26,21 +27,63 @@ export const Voting: React.FC = () => {
   }, [currentStudent, navigate]);
 
   // Selections: { 'Head Boy': candidateId, ... }
-  const [selections, setSelections] = useState<{ [position: string]: string }>({});
+  const [selections, setSelections] = useState<{ [position: string]: string }>(() => {
+    // Load saved progress
+    const saved = localStorage.getItem(`voting_progress_${currentStudent?.id}`);
+    return saved ? JSON.parse(saved) : {};
+  });
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
+  const [currentStep, setCurrentStep] = useState<number>(0);
 
-  const positions = ['Head Boy', 'Head Girl', 'Sports Captain', 'Discipline Captain'];
+  const positions = [...GLOBAL_POSITIONS, ...HOUSE_POSITIONS];
+
+  // Auto-save selections
+  useEffect(() => {
+    if (currentStudent) {
+       localStorage.setItem(`voting_progress_${currentStudent.id}`, JSON.stringify(selections));
+    }
+  }, [selections, currentStudent]);
 
   if (!currentStudent) return null;
 
-  // Filter candidates to show ONLY those belonging to the student's selected house color
-  const houseCandidates = currentStudent.isTeacher ? candidates : candidates.filter(c => c.house === selectedHouse);
+  // Filter logic based on the position
+  const getCandidatesForPosition = (pos: string) => {
+    if (GLOBAL_POSITIONS.includes(pos)) {
+       return candidates.filter(c => c.position === pos);
+    }
+    // House position logic
+    if (currentStudent.isTeacher) {
+       // Teachers can see candidates from all houses, but here let's assume they shouldn't vote for house captains 
+       // based on standard school rules unless specified. We will allow them to vote for all for now.
+       return candidates.filter(c => c.position === pos);
+    }
+    return candidates.filter(c => c.position === pos && c.house === selectedHouse);
+  };
 
   const handleSelectCandidate = (position: string, candidateId: string) => {
     setSelections(prev => ({
       ...prev,
       [position]: candidateId
     }));
+  };
+
+  const currentPosition = positions[currentStep];
+  const currentPosCandidates = getCandidatesForPosition(currentPosition);
+
+  const handleNext = () => {
+     if (currentStep < positions.length - 1) {
+        setCurrentStep(prev => prev + 1);
+        window.scrollTo(0,0);
+     } else {
+        handleOpenConfirm();
+     }
+  };
+
+  const handleBack = () => {
+     if (currentStep > 0) {
+        setCurrentStep(prev => prev - 1);
+        window.scrollTo(0,0);
+     }
   };
 
   const handleOpenConfirm = () => {
@@ -60,6 +103,7 @@ export const Voting: React.FC = () => {
     setIsConfirmModalOpen(false);
 
     if (result.success) {
+      localStorage.removeItem(`voting_progress_${currentStudent.id}`);
       navigate('/confirmation');
     } else {
       alert(result.message);
@@ -118,7 +162,7 @@ export const Voting: React.FC = () => {
             Return to Home
           </button>
         </div>
-      ) : ( houseCandidates.length === 0 ? (
+      ) : ( candidates.length === 0 ? (
         <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-12 text-center max-w-lg mx-auto shadow-xl">
           <FaExclamationCircle className="text-amber-400 text-5xl mx-auto mb-4 animate-bounce" />
           <h2 className="text-xl font-bold text-white mb-2">No Candidates Found</h2>
@@ -131,18 +175,39 @@ export const Voting: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="space-y-16 mb-12">
-          {positions.map((pos) => {
-            const posCandidates = houseCandidates.filter(c => c.position === pos);
+        <div className="space-y-10 mb-12">
+            <div className="flex items-center justify-between text-slate-400 text-sm font-bold mb-4">
+               <span>Voting Step {currentStep + 1} of {positions.length}</span>
+               <span className="flex items-center gap-1 text-emerald-400"><FaSave /> Progress Auto-Saved</span>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="w-full bg-slate-800 rounded-full h-2.5 mb-8">
+              <div className="bg-indigo-500 h-2.5 rounded-full transition-all duration-500" style={{ width: `${((currentStep + 1) / positions.length) * 100}%` }}></div>
+            </div>
 
-            return (
-              <section key={pos} className="glass-panel bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl">
+            <AnimatePresence mode="wait">
+              <motion.section 
+                key={currentPosition}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="glass-panel bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl"
+              >
+                {/* Category Header */}
+                <div className="mb-6">
+                   <div className="inline-block px-3 py-1 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold uppercase tracking-wider border border-slate-700 mb-4">
+                      {GLOBAL_POSITIONS.includes(currentPosition) ? "School Leadership" : "Your House Elections"}
+                   </div>
+                </div>
+
                 {/* Position Header */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
                   <div>
                     <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                      <span>{pos}</span>
-                      {selections[pos] && (
+                      <span>{currentPosition}</span>
+                      {selections[currentPosition] && (
                         <FaCheckCircle className="text-emerald-400 text-lg" title="Candidate Selected" />
                       )}
                     </h2>
@@ -151,39 +216,56 @@ export const Voting: React.FC = () => {
 
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-400 font-medium">Selected:</span>
-                    <span className={`text-xs font-bold px-3 py-1 rounded-xl border ${selections[pos] ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
-                      {selections[pos]
-                        ? houseCandidates.find(c => c.id === selections[pos])?.name
+                    <span className={`text-xs font-bold px-3 py-1 rounded-xl border ${selections[currentPosition] ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                      {selections[currentPosition]
+                        ? currentPosCandidates.find(c => c.id === selections[currentPosition])?.name
                         : 'None Selected'}
                     </span>
                   </div>
                 </div>
 
                 {/* Candidate Cards Grid */}
-                {posCandidates.length === 0 ? (
+                {currentPosCandidates.length === 0 ? (
                   <div className="bg-slate-950/60 p-6 rounded-2xl border border-slate-800/80 text-center text-xs text-slate-400 font-medium">
-                    No candidates registered for {pos} {currentStudent.isTeacher ? 'across any house' : `in ${selectedHouse} House`}.
+                    No candidates registered for {currentPosition} {currentStudent.isTeacher ? 'across any house' : `in ${selectedHouse} House`}.
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                    {posCandidates.map(candidate => (
+                    {currentPosCandidates.map(candidate => (
                       <CandidateCard
                         key={candidate.id}
                         candidate={candidate}
-                        isSelected={selections[pos] === candidate.id}
-                        onSelect={(id) => handleSelectCandidate(pos, id)}
+                        isSelected={selections[currentPosition] === candidate.id}
+                        onSelect={(id) => handleSelectCandidate(currentPosition, id)}
                       />
                     ))}
                   </div>
                 )}
-              </section>
-            );
-          })}
+                
+                {/* Navigation inside card */}
+                <div className="mt-10 flex items-center justify-between border-t border-slate-800 pt-6">
+                   <button
+                     onClick={handleBack}
+                     disabled={currentStep === 0}
+                     className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors flex items-center gap-2 disabled:opacity-50"
+                   >
+                     <FaArrowLeft /> Back
+                   </button>
+
+                   <button
+                     onClick={handleNext}
+                     className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors flex items-center gap-2"
+                   >
+                     {currentStep === positions.length - 1 ? 'Review Ballot' : 'Next Position'} <FaArrowRight />
+                   </button>
+                </div>
+              </motion.section>
+            </AnimatePresence>
         </div>
       ))}
 
       {/* Bottom Sticky Action Bar */}
-      {electionState.status === 'active' && houseCandidates.length > 0 && (
+      {electionState.status === 'active' && candidates.length > 0 && (
         <motion.div
           initial={{ y: 100 }}
           animate={{ y: 0 }}
@@ -206,11 +288,15 @@ export const Voting: React.FC = () => {
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               type="button"
-              onClick={() => setSelections({})}
+              onClick={() => {
+                 setSelections({});
+                 setCurrentStep(0);
+                 localStorage.removeItem(`voting_progress_${currentStudent.id}`);
+              }}
               className="w-1/3 sm:w-auto px-6 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs md:text-sm transition-all border border-slate-700 flex items-center justify-center gap-2"
             >
               <FaUndoAlt />
-              <span>Clear</span>
+              <span>Clear Ballot</span>
             </button>
             <button
               type="button"
@@ -218,7 +304,7 @@ export const Voting: React.FC = () => {
               className="w-2/3 sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs md:text-sm shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 border border-emerald-400/30"
             >
               <FaCheckCircle className="text-lg" />
-              <span>Review & Submit Vote</span>
+              <span>Submit Ballot</span>
             </button>
           </div>
         </motion.div>

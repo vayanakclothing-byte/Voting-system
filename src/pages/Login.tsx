@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { HouseColor } from '../types';
-import { FaGraduationCap, FaUserGraduate, FaKeyboard, FaListUl, FaUndoAlt, FaArrowRight, FaLock } from 'react-icons/fa';
+import { FaGraduationCap, FaUserGraduate, FaKeyboard, FaListUl, FaUndoAlt, FaArrowRight, FaLock, FaSpinner } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useDebounce } from 'use-debounce';
+import { db } from '../services/db';
 import { CampaignPosters } from '../components/CampaignPosters';
 import { NoticeBoard } from '../components/NoticeBoard';
 
@@ -19,6 +21,9 @@ export const Login: React.FC = () => {
     currentStudent
   } = useApp();
 
+  const [isLoadingStudents, setIsLoadingStudents] = useState<boolean>(false);
+  const [fetchedClassStudents, setFetchedClassStudents] = useState<any[]>([]);
+
   const navigate = useNavigate();
 
   const [selectedClass, setSelectedClass] = useState<string>('');
@@ -28,29 +33,48 @@ export const Login: React.FC = () => {
   const [isManualMode, setIsManualMode] = useState<boolean>(electionState.allowManualTyping);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
 
-  // Filter students based on class selection
-  const classStudents = useMemo(() => {
-    if (!selectedClass) return [];
-    
-    if (selectedClass === 'Teacher') {
-      return teachers.map(t => ({
-        id: t.id,
-        name: t.name,
-        className: 'Teacher',
-        section: '',
-        hasVoted: t.hasVoted || false
-      })).sort((a, b) => a.name.localeCompare(b.name));
-    }
+  const [debouncedStudentName] = useDebounce(studentNameInput, 500);
 
-    const targetClass = selectedClass.trim().toLowerCase();
-    let filtered = students.filter(s => (s.className || '').trim().toLowerCase() === targetClass);
+  // Fetch students based on class selection dynamically
+  useEffect(() => {
+    const fetchStudents = async () => {
+      if (!selectedClass) {
+        setFetchedClassStudents([]);
+        return;
+      }
+      
+      setIsLoadingStudents(true);
+      try {
+        if (selectedClass === 'Teacher') {
+           const teacherData = teachers.map(t => ({
+            id: t.id,
+            name: t.name,
+            className: 'Teacher',
+            section: '',
+            hasVoted: t.hasVoted || false
+          })).sort((a, b) => a.name.localeCompare(b.name));
+          setFetchedClassStudents(teacherData);
+        } else {
+           const classData = await db.fetchStudentsByClass(selectedClass);
+           setFetchedClassStudents(classData.sort((a, b) => a.name.localeCompare(b.name)));
+        }
+      } catch (e) {
+        console.error("Failed to load students", e);
+      } finally {
+        setIsLoadingStudents(false);
+      }
+    };
+    fetchStudents();
+  }, [selectedClass, teachers]);
+
+
+  // Filter students based on section
+  const classStudents = useMemo(() => {
+    if (!selectedSection) return fetchedClassStudents;
     
-    if (selectedSection) {
-      const targetSection = selectedSection.trim().toLowerCase();
-      filtered = filtered.filter(s => (s.section || '').trim().toLowerCase() === targetSection);
-    }
-    return filtered.sort((a, b) => a.name.localeCompare(b.name));
-  }, [students, teachers, selectedClass, selectedSection]);
+    const targetSection = selectedSection.trim().toLowerCase();
+    return fetchedClassStudents.filter(s => (s.section || '').trim().toLowerCase() === targetSection);
+  }, [fetchedClassStudents, selectedSection]);
 
   const availableSections = useMemo(() => {
     if (!selectedClass) return [];
@@ -62,19 +86,17 @@ export const Login: React.FC = () => {
     }
     
     // Fallback: derive unique sections from the students themselves
-    const targetClass = selectedClass.trim().toLowerCase();
-    const studentsInClass = students.filter(s => (s.className || '').trim().toLowerCase() === targetClass);
-    const uniqueSections = Array.from(new Set(studentsInClass.map(s => (s.section || '').trim()).filter(Boolean)));
+    const uniqueSections = Array.from(new Set(fetchedClassStudents.map(s => (s.section || '').trim()).filter(Boolean)));
     return uniqueSections.sort();
   }, [classes, students, selectedClass]);
 
-  // Auto-suggestion list while typing
+  // Auto-suggestion list while typing (using debounced value)
   const suggestions = useMemo(() => {
-    if (!studentNameInput.trim()) return classStudents;
+    if (!debouncedStudentName.trim()) return classStudents;
     return classStudents.filter(s =>
-      s.name.toLowerCase().includes(studentNameInput.toLowerCase())
+      s.name.toLowerCase().includes(debouncedStudentName.toLowerCase())
     );
-  }, [classStudents, studentNameInput]);
+  }, [classStudents, debouncedStudentName]);
 
   const handleHouseSelection = (house: HouseColor) => {
     setHouseInput(house);
@@ -111,12 +133,18 @@ export const Login: React.FC = () => {
       return;
     }
 
+    const matchedStudent = classStudents.find(s => s.name.toLowerCase() === studentNameInput.trim().toLowerCase());
+    if (!matchedStudent && !isManualMode) {
+        alert("The selected student is not valid for this class.");
+        return;
+    }
+
     // Verify student session login
     const success = loginStudent({
-      name: studentNameInput.trim(),
+      name: matchedStudent ? matchedStudent.name : studentNameInput.trim(), // Use exact DB name if matched
       className: selectedClass,
       house: selectedClass === 'Teacher' ? 'Teacher' : (houseInput as HouseColor),
-      id: classStudents.find(s => s.name.toLowerCase() === studentNameInput.trim().toLowerCase())?.id,
+      id: matchedStudent?.id,
       isTeacher: selectedClass === 'Teacher'
     });
 
@@ -255,32 +283,46 @@ export const Login: React.FC = () => {
 
                 {/* Auto-suggestion Dropdown */}
                 <AnimatePresence>
-                  {showSuggestions && selectedClass && suggestions.length > 0 && (
+                  {showSuggestions && selectedClass && (
                     <motion.ul
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       className="absolute left-0 right-0 top-full mt-2 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-h-60 overflow-y-auto z-50 divide-y divide-slate-800"
                     >
-                      {suggestions.map(student => (
-                        <li
-                          key={student.id}
-                          onClick={() => handleSelectSuggestedStudent(student.name)}
-                          className="px-4 py-3 hover:bg-slate-800/80 cursor-pointer flex items-center justify-between text-sm transition-colors"
-                        >
-                          <div className="flex items-center gap-2">
-                            <FaUserGraduate className="text-slate-500" />
-                            <span className="text-white font-medium">{student.name}</span>
-                            {student.section && (
-                              <span className="text-xs text-slate-400">Sec {student.section}</span>
-                            )}
-                          </div>
-                        </li>
-                      ))}
+                      {isLoadingStudents ? (
+                        <div className="p-6 flex flex-col items-center justify-center gap-3">
+                           <FaSpinner className="animate-spin text-indigo-400 text-2xl" />
+                           <span className="text-sm text-slate-400 font-medium">Fetching students...</span>
+                        </div>
+                      ) : suggestions.length > 0 ? (
+                        suggestions.map(student => (
+                          <li
+                            key={student.id}
+                            onClick={() => handleSelectSuggestedStudent(student.name)}
+                            className="px-4 py-3 hover:bg-slate-800/80 cursor-pointer flex items-center justify-between text-sm transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              <FaUserGraduate className="text-slate-500" />
+                              <span className="text-white font-medium">{student.name}</span>
+                              {student.section && (
+                                <span className="text-xs text-slate-400">Sec {student.section}</span>
+                              )}
+                            </div>
+                          </li>
+                        ))
+                      ) : (
+                         <div className="px-4 py-3 text-slate-400 text-sm text-center">No matching students found in this class.</div>
+                      )}
                     </motion.ul>
                   )}
                 </AnimatePresence>
               </div>
+            ) : isLoadingStudents ? (
+               <div className="w-full bg-slate-950/80 border border-slate-700/80 rounded-2xl px-4 py-3.5 flex items-center justify-center gap-3">
+                 <FaSpinner className="animate-spin text-indigo-400" />
+                 <span className="text-sm text-slate-400 font-medium">Loading student list...</span>
+               </div>
             ) : (
               <select
                 value={studentNameInput}
