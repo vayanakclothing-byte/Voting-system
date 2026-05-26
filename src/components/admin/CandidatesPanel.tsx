@@ -41,7 +41,7 @@ export const CandidatesPanel: React.FC<CandidatesPanelProps> = ({ candidates, re
     }
     refreshData();
     setEditingCandidateId(null);
-    setCandName(''); setCandPos('Head Boy'); setCandCustomPos(''); setCandHouse('Blue'); setCandSlogan(''); setCandSymbol('⭐'); setCandPhoto('');
+    setCandName(''); setCandPos(GLOBAL_POSITIONS[0]); setCandCustomPos(''); setCandHouse('Blue'); setCandSlogan(''); setCandSymbol('⭐'); setCandPhoto('');
   };
 
   const handleDeleteCandidate = (id: string) => {

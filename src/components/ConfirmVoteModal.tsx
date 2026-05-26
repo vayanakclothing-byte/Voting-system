@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { FaExclamationTriangle, FaCheckCircle, FaSpinner, FaTimes } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import { GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../types';
 
 interface ConfirmVoteModalProps {
   isOpen: boolean;
@@ -16,7 +17,7 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
 
   if (!isOpen) return null;
 
-  const positions = ['Head Boy', 'Head Girl', 'Sports Captain', 'Discipline Captain'];
+  const positions = [...GLOBAL_POSITIONS, ...HOUSE_POSITIONS];
 
   const handleFinalConfirm = () => {
     setIsSubmitting(true);

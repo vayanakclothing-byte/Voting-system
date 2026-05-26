@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { db } from '../../services/db';
 import { BulkStudentSchema, BulkTeacherSchema, BulkCandidateSchema } from '../../utils/validators';
 import toast from 'react-hot-toast';
+import { GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../../types';
 
 interface BulkUploadPanelProps {
   refreshData: () => void;
@@ -32,7 +33,7 @@ export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData })
     } else {
       wsData = [
         ['Candidate Name', 'Position', 'House', 'Slogan', 'Symbol', 'Photo URL'],
-        ['Leo Vance', 'Head Boy', 'Blue', 'Leading with Honor!', '⚓', 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=400']
+        ['Leo Vance', GLOBAL_POSITIONS[0], 'Blue', 'Leading with Honor!', '⚓', 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=400']
       ];
     }
     const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -63,10 +64,10 @@ export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData })
 
     if (bulkType === 'students') {
       const formatted = parsedRows.map(r => ({
-        name: String(r['Student Name'] || r['name'] || ''),
-        className: String(r['Class'] || r['className'] || ''),
-        section: String(r['Section'] || r['section'] || ''),
-        rollNumber: String(r['Roll Number'] || r['rollNumber'] || '')
+        name: String(r['Student Name'] || r['name'] || '').trim(),
+        className: String(r['Class'] || r['className'] || '').trim(),
+        section: String(r['Section'] || r['section'] || '').trim(),
+        rollNumber: String(r['Roll Number'] || r['rollNumber'] || '').trim()
       }));
 
       const parsed = BulkStudentSchema.safeParse(formatted);
@@ -78,9 +79,9 @@ export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData })
       setUploadReport(res);
     } else if (bulkType === 'teachers') {
       const formatted = parsedRows.map(r => ({
-        name: String(r['Teacher Name'] || r['name'] || ''),
-        subject: String(r['Subject'] || r['subject'] || ''),
-        department: String(r['Department'] || r['department'] || '')
+        name: String(r['Teacher Name'] || r['name'] || '').trim(),
+        subject: String(r['Subject'] || r['subject'] || '').trim(),
+        department: String(r['Department'] || r['department'] || '').trim()
       }));
 
       const parsed = BulkTeacherSchema.safeParse(formatted);
@@ -91,14 +92,18 @@ export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData })
       const res = await db.bulkUploadTeachers(parsed.data);
       setUploadReport(res);
     } else {
-      const formatted = parsedRows.map(r => ({
-        name: String(r['Candidate Name'] || r['name'] || ''),
-        position: ['Head Boy', 'Head Girl', 'Sports Captain', 'Discipline Captain'].includes(r['Position']) ? r['Position'] : String(r['Position'] || ''),
-        house: ['Blue', 'Red', 'Green', 'Yellow'].includes(r['House']) ? r['House'] : 'Blue',
-        slogan: String(r['Slogan'] || r['slogan'] || 'Excellence in Action!'),
-        symbol: String(r['Symbol'] || r['symbol'] || '⭐'),
-        photoUrl: String(r['Photo URL'] || r['photoUrl'] || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400')
-      }));
+      const formatted = parsedRows.map(r => {
+        const rPos = String(r['Position'] || '');
+        const validPos = [...GLOBAL_POSITIONS, ...HOUSE_POSITIONS].includes(rPos) ? rPos : rPos;
+        return {
+          name: String(r['Candidate Name'] || r['name'] || '').trim(),
+          position: validPos,
+          house: ['Blue', 'Red', 'Green', 'Yellow'].includes(String(r['House'])) ? String(r['House']) : 'Blue',
+          slogan: String(r['Slogan'] || r['slogan'] || 'Excellence in Action!'),
+          symbol: String(r['Symbol'] || r['symbol'] || '⭐'),
+          photoUrl: String(r['Photo URL'] || r['photoUrl'] || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400')
+        };
+      });
 
       const parsed = BulkCandidateSchema.safeParse(formatted);
       if (!parsed.success) {

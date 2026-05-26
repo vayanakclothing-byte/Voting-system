@@ -88,7 +88,7 @@ export const Login: React.FC = () => {
     // Fallback: derive unique sections from the students themselves
     const uniqueSections = Array.from(new Set(fetchedClassStudents.map(s => (s.section || '').trim()).filter(Boolean)));
     return uniqueSections.sort();
-  }, [classes, students, selectedClass]);
+  }, [classes, students, selectedClass, fetchedClassStudents]);
 
   // Auto-suggestion list while typing (using debounced value)
   const suggestions = useMemo(() => {
