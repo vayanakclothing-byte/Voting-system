@@ -127,8 +127,18 @@ class DatabaseService {
         where('className', '==', className)
       );
       const snapshot = await getDocs(q);
-      const fetchedStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Student[];
+      let fetchedStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Student[];
       
+      // Fallback: If strict equality fails (e.g., due to trailing spaces or case mismatch in bulk upload),
+      // fetch all students and filter locally.
+      if (fetchedStudents.length === 0) {
+         const allSnapshot = await getDocs(collection(firestore, 'students'));
+         const allStudents = allSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Student[];
+         fetchedStudents = allStudents.filter(s => 
+           (s.className || '').trim().toLowerCase() === className.trim().toLowerCase()
+         );
+      }
+
       // Store in cache
       this.studentsCache[className] = fetchedStudents;
       
@@ -287,6 +297,7 @@ class DatabaseService {
       count++;
     });
     await batch.commit();
+    this.studentsCache = {}; // Invalidate cache
     this.addLog('Bulk Upload Students', `Imported ${count} students.`, 'success');
     return { imported: count, skipped: 0 };
   }
