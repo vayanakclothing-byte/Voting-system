@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
+import { db } from '../services/db';
 import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { FaTrophy, FaChartBar, FaChartPie, FaUsers, FaTv, FaSyncAlt, FaArrowLeft, FaMedal, FaClock } from 'react-icons/fa';
@@ -10,6 +11,12 @@ import { GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../types';
 export const LiveResults: React.FC = () => {
   const { candidates, students, votes, electionState, refreshData } = useApp();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    db.fetchAllStudents().then(() => {
+      refreshData();
+    });
+  }, []);
 
   const [activeTab, setActiveTab] = useState<'positions' | 'analytics' | 'houses' | 'timeline'>('positions');
   const [smartBoardMode, setSmartBoardMode] = useState<boolean>(false);

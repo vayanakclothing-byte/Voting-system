@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { db } from '../services/db';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +23,14 @@ export const AdminDashboard: React.FC = () => {
   } = useApp();
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAdminLoggedIn) {
+      db.fetchAllStudents().then(() => {
+        refreshData();
+      });
+    }
+  }, [isAdminLoggedIn]);
 
   // Admin Login State
   const [email, setEmail] = useState('');

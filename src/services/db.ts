@@ -142,6 +142,20 @@ class DatabaseService {
       return [];
     }
   }
+
+  public async fetchAllStudents(): Promise<Student[]> {
+    if (!firestore) return [];
+    try {
+      const snapshot = await getDocs(collection(firestore, 'students'));
+      const fetchedStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Student[];
+      this.state.students = fetchedStudents;
+      this.notifyListeners();
+      return fetchedStudents;
+    } catch (error) {
+      console.error("Error fetching all students:", error);
+      return [];
+    }
+  }
   
   public async addStudent(student: Omit<Student, 'id' | 'hasVoted'>) {
     if (!firestore) return;
