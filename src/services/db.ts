@@ -106,6 +106,20 @@ class DatabaseService {
   public getElectionState(): ElectionState { return this.state.electionState; }
   public async updateElectionState(newState: Partial<ElectionState>) {
     if (!firestore) return;
+    
+    // If setting status to active, ensure endTime is in the future
+    if (newState.status === 'active') {
+      const currentEndTime = newState.endTime || this.state.electionState.endTime;
+      if (currentEndTime) {
+        const end = new Date(currentEndTime).getTime();
+        if (isNaN(end) || Date.now() >= end) {
+          newState.endTime = new Date(Date.now() + 28800000).toISOString(); // 8 hours default
+        }
+      } else {
+        newState.endTime = new Date(Date.now() + 28800000).toISOString();
+      }
+    }
+    
     await updateDoc(doc(firestore, 'system', 'electionState'), newState);
     this.addLog(`Election State Updated`, `Status changed to ${newState.status || this.state.electionState.status}`, 'info');
   }
@@ -370,7 +384,11 @@ class DatabaseService {
     this.state.candidates.forEach(c => batch.update(doc(firestore, 'candidates', c.id), { votesCount: 0 }));
     this.state.students.forEach(s => batch.update(doc(firestore, 'students', s.id), { hasVoted: false }));
     this.state.votes.forEach(v => batch.delete(doc(firestore, 'votes', v.id)));
-    batch.update(doc(firestore, 'system', 'electionState'), { status: 'active', startTime: new Date().toISOString() });
+    batch.update(doc(firestore, 'system', 'electionState'), { 
+      status: 'active', 
+      startTime: new Date().toISOString(),
+      endTime: new Date(Date.now() + 28800000).toISOString() // Reset endTime to 8 hours from now
+    });
     await batch.commit();
     this.addLog('Election Reset', 'All votes cleared.', 'warning');
   }
