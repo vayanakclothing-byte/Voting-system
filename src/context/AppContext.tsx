@@ -1,9 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { db } from '../services/db';
 import { Student, Teacher, Candidate, Vote, ElectionState, ActivityLog, HouseColor, SchoolClass } from '../types';
 import toast from 'react-hot-toast';
 import { auth } from '../services/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+
+const VOTER_SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes inactivity timeout
 
 interface StudentSession {
   id?: string;
@@ -83,6 +85,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setElectionState(db.getElectionState());
   };
 
+  // Voter session inactivity timeout
+  const lastActivityRef = useRef<number>(Date.now());
+
+  const resetActivityTimer = useCallback(() => {
+    lastActivityRef.current = Date.now();
+  }, []);
+
+  // Track user activity for session timeout
+  useEffect(() => {
+    if (!currentStudent) return;
+
+    const events = ['mousedown', 'keydown', 'touchstart', 'scroll'] as const;
+    events.forEach(e => window.addEventListener(e, resetActivityTimer));
+
+    const interval = setInterval(() => {
+      if (Date.now() - lastActivityRef.current > VOTER_SESSION_TIMEOUT_MS) {
+        toast.error('Session expired due to inactivity.');
+        logoutStudent();
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, resetActivityTimer));
+      clearInterval(interval);
+    };
+  }, [currentStudent, resetActivityTimer]);
+
   useEffect(() => {
     db.initRealtimeListeners();
     const unsubscribeDb = db.subscribe(() => {
@@ -107,9 +136,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [currentStudent]);
 
   const loginStudent = (session: StudentSession): boolean => {
+    // Check both status and endTime for consistency
     if (electionState.status !== 'active') {
       toast.error('Election is currently not active!');
       return false;
+    }
+    if (electionState.endTime) {
+      const end = new Date(electionState.endTime).getTime();
+      if (!isNaN(end) && Date.now() >= end) {
+        toast.error('The election period has ended.');
+        return false;
+      }
     }
 
     // Verify if student/teacher already voted
@@ -131,6 +168,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setCurrentStudent(session);
     setSelectedHouse(session.house);
+    lastActivityRef.current = Date.now(); // Reset activity timer on login
     sessionStorage.setItem('currentStudentSession', JSON.stringify(session));
     toast.success(`Welcome, ${session.name}!`);
 

@@ -13,6 +13,14 @@ export const Confirmation: React.FC = () => {
   useEffect(() => {
     const speech = new SpeechSynthesisUtterance('Your vote has been successfully submitted. Thank you for participating in the Royal Academy student council election.');
     window.speechSynthesis.speak(speech);
+
+    // Auto-logout after 8 seconds for shared device security
+    const autoLogoutTimer = setTimeout(() => {
+      logoutStudent();
+      navigate('/');
+    }, 8000);
+
+    return () => clearTimeout(autoLogoutTimer);
   }, []);
 
   const handleFinish = () => {

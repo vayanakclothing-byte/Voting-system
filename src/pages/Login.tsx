@@ -16,6 +16,7 @@ export const Login: React.FC = () => {
     classes,
     electionState,
     loginStudent,
+    logoutStudent,
     setSelectedHouse,
     selectedHouse,
     currentStudent
@@ -66,6 +67,14 @@ export const Login: React.FC = () => {
     };
     fetchStudents();
   }, [selectedClass, teachers]);
+
+  // Issue 7: Clear stale sessions on mount if election is not active or has ended
+  useEffect(() => {
+    const isEnded = electionState.status !== 'active' || (electionState.endTime && Date.now() >= new Date(electionState.endTime).getTime());
+    if (isEnded && currentStudent) {
+      logoutStudent();
+    }
+  }, [electionState.status, electionState.endTime, currentStudent, logoutStudent]);
 
 
   // Filter students based on section
@@ -367,6 +376,8 @@ export const Login: React.FC = () => {
               {/* Blue House */}
               <button
                 type="button"
+                id="login-house-blue"
+                aria-label="Select Blue House theme"
                 onClick={() => handleHouseSelection('Blue')}
                 className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300 ${
                   houseInput === 'Blue'
@@ -381,6 +392,8 @@ export const Login: React.FC = () => {
               {/* Red House */}
               <button
                 type="button"
+                id="login-house-red"
+                aria-label="Select Red House theme"
                 onClick={() => handleHouseSelection('Red')}
                 className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300 ${
                   houseInput === 'Red'
@@ -395,6 +408,8 @@ export const Login: React.FC = () => {
               {/* Green House */}
               <button
                 type="button"
+                id="login-house-green"
+                aria-label="Select Green House theme"
                 onClick={() => handleHouseSelection('Green')}
                 className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300 ${
                   houseInput === 'Green'
@@ -409,6 +424,8 @@ export const Login: React.FC = () => {
               {/* Yellow House */}
               <button
                 type="button"
+                id="login-house-yellow"
+                aria-label="Select Yellow House theme"
                 onClick={() => handleHouseSelection('Yellow')}
                 className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300 ${
                   houseInput === 'Yellow'

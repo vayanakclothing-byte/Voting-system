@@ -115,6 +115,8 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
           <div className="flex items-center justify-end gap-3">
             <button
               type="button"
+              id="confirm-modal-btn-back"
+              aria-label="Return to candidate selection"
               onClick={onClose}
               disabled={isSubmitting}
               className="px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm transition-all border border-slate-700 disabled:opacity-50"
@@ -123,6 +125,8 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
             </button>
             <button
               type="button"
+              id="confirm-modal-btn-submit"
+              aria-label="Confirm choices and cast final ballot"
               onClick={handleFinalConfirm}
               disabled={isSubmitting}
               className="px-8 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-2 disabled:opacity-50 border border-emerald-400/30"

@@ -4,7 +4,7 @@ import { db } from '../services/db';
 import { useNavigate } from 'react-router-dom';
 import {
   FaUserShield, FaChartBar, FaUsers, FaChalkboardTeacher, FaSchool, FaFileExcel,
-  FaClipboardList, FaLock, FaKey
+  FaClipboardList, FaLock
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,22 +19,16 @@ import { LogsPanel } from '../components/admin/LogsPanel';
 export const AdminDashboard: React.FC = () => {
   const {
     candidates, students, teachers, classes, votes, logs, electionState,
-    isAdminLoggedIn, loginAdmin, logoutAdmin, refreshData
+    isAdminLoggedIn, logoutAdmin, refreshData
   } = useApp();
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAdminLoggedIn) {
-      db.fetchAllStudents().then(() => {
-        refreshData();
-      });
-    }
-  }, [isAdminLoggedIn]);
-
-  // Admin Login State
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+    db.fetchAllStudents().then(() => {
+      refreshData();
+    });
+  }, []);
 
   // Dashboard Tabs
   const [activeTab, setActiveTab] = useState<'overview' | 'candidates' | 'students' | 'teachers' | 'classes' | 'bulk' | 'logs'>('overview');
@@ -53,55 +47,6 @@ export const AdminDashboard: React.FC = () => {
       alert('Election has been reset successfully.');
     }
   };
-
-  // --- LOGIN SCREEN IF NOT AUTHENTICATED ---
-  if (!isAdminLoggedIn) {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-4 relative z-10 overflow-hidden">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel bg-slate-900/90 border border-slate-800 rounded-3xl max-w-md w-full p-8 shadow-2xl relative">
-          <div className="w-16 h-16 rounded-3xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto mb-6 border border-indigo-500/30 text-3xl shadow-inner">
-            <FaLock />
-          </div>
-          <h1 className="text-2xl font-extrabold text-white text-center mb-2">Admin Dashboard Login</h1>
-          <p className="text-xs text-slate-400 text-center mb-6">Enter the secure admin credentials to access the management portal.</p>
-
-          <form onSubmit={(e) => { e.preventDefault(); loginAdmin(email, password); }} className="space-y-6">
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Email Address</label>
-              <div className="relative">
-                <FaUserShield className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@school.edu"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner"
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Password</label>
-              <div className="relative">
-                <FaKey className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner tracking-widest font-mono"
-                  required
-                />
-              </div>
-            </div>
-            <button type="submit" className="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 transition-all border border-indigo-400/30">
-              Authenticate
-            </button>
-          </form>
-        </motion.div>
-      </main>
-    );
-  }
 
   const totalStudents = students.length;
   const votedStudents = students.filter(s => s.hasVoted).length;

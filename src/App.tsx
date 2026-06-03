@@ -8,10 +8,13 @@ import { SplashScreen } from './components/SplashScreen';
 import { Toaster } from 'react-hot-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 
+import { ProtectedRoute } from './components/ProtectedRoute';
+
 // Lazy loaded routes for code-splitting and performance
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
 const Voting = lazy(() => import('./pages/Voting').then(module => ({ default: module.Voting })));
 const Confirmation = lazy(() => import('./pages/Confirmation').then(module => ({ default: module.Confirmation })));
+const AdminLogin = lazy(() => import('./pages/AdminLogin').then(module => ({ default: module.AdminLogin })));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 const LiveResults = lazy(() => import('./pages/LiveResults').then(module => ({ default: module.LiveResults })));
 
@@ -39,7 +42,8 @@ const AnimatedRoutes = () => {
           <Route path="/" element={<PageTransition><Login /></PageTransition>} />
           <Route path="/voting" element={<PageTransition><Voting /></PageTransition>} />
           <Route path="/confirmation" element={<PageTransition><Confirmation /></PageTransition>} />
-          <Route path="/admin" element={<PageTransition><AdminDashboard /></PageTransition>} />
+          <Route path="/admin-login" element={<PageTransition><AdminLogin /></PageTransition>} />
+          <Route path="/admin" element={<PageTransition><ProtectedRoute><AdminDashboard /></ProtectedRoute></PageTransition>} />
           <Route path="/results" element={<PageTransition><LiveResults /></PageTransition>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

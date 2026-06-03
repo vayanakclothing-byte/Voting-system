@@ -19,12 +19,18 @@ export const Voting: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // Redirect if no active student session
+  // Redirect if no active student session or election ended
   useEffect(() => {
     if (!currentStudent) {
       navigate('/');
+      return;
     }
-  }, [currentStudent, navigate]);
+    const isEnded = electionState.status !== 'active' || (electionState.endTime && Date.now() >= new Date(electionState.endTime).getTime());
+    if (isEnded) {
+      logoutStudent();
+      navigate('/');
+    }
+  }, [currentStudent, electionState.status, electionState.endTime, navigate, logoutStudent]);
 
   // Selections: { 'Head Boy': candidateId, ... }
   const [selections, setSelections] = useState<{ [position: string]: string }>(() => {
@@ -130,7 +136,13 @@ export const Voting: React.FC = () => {
             Cast Your Encrypted Ballot
           </h1>
           <p className="text-xs md:text-sm text-slate-300 max-w-xl leading-relaxed">
-            Welcome, <strong className="text-white font-bold">{currentStudent.name}</strong>. You are viewing candidates {currentStudent.isTeacher ? 'across all houses' : <>exclusively for the <strong className="text-white font-bold">{currentStudent.house} House</strong></>}. Please select one candidate for each position below.
+            Welcome, <strong className="text-white font-bold">{currentStudent.name}</strong>. {GLOBAL_POSITIONS.includes(currentPosition) ? (
+              <span>You are viewing school leadership candidates from all houses.</span>
+            ) : currentStudent.isTeacher ? (
+              <span>You are viewing house candidates from all houses.</span>
+            ) : (
+              <span>You are viewing candidates exclusively for the <strong className="text-white font-bold">{currentStudent.house} House</strong>.</span>
+            )} Please select one candidate for each position below.
           </p>
         </div>
 
@@ -245,6 +257,8 @@ export const Voting: React.FC = () => {
                 {/* Navigation inside card */}
                 <div className="mt-10 flex items-center justify-between border-t border-slate-800 pt-6">
                    <button
+                     id="voting-btn-back"
+                     aria-label="Go back to the previous voting step"
                      onClick={handleBack}
                      disabled={currentStep === 0}
                      className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors flex items-center gap-2 disabled:opacity-50"
@@ -253,6 +267,8 @@ export const Voting: React.FC = () => {
                    </button>
 
                    <button
+                     id="voting-btn-next"
+                     aria-label="Proceed to the next position or review ballot"
                      onClick={handleNext}
                      className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors flex items-center gap-2"
                    >
@@ -288,6 +304,8 @@ export const Voting: React.FC = () => {
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               type="button"
+              id="voting-btn-clear"
+              aria-label="Clear all current selections"
               onClick={() => {
                  setSelections({});
                  setCurrentStep(0);
@@ -300,8 +318,11 @@ export const Voting: React.FC = () => {
             </button>
             <button
               type="button"
+              id="voting-btn-submit"
+              aria-label="Submit your ballot"
               onClick={handleOpenConfirm}
-              className="w-2/3 sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs md:text-sm shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 border border-emerald-400/30"
+              disabled={!Object.keys(selections).some(pos => selections[pos])}
+              className="w-2/3 sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs md:text-sm shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 border border-emerald-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FaCheckCircle className="text-lg" />
               <span>Submit Ballot</span>

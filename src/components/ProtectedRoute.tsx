@@ -10,7 +10,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAdminLoggedIn } = useApp();
 
   if (!isAdminLoggedIn) {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to="/admin-login" replace />;
   }
 
   return <>{children}</>;

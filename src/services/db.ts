@@ -14,6 +14,7 @@ const DEFAULT_ELECTION_STATE: ElectionState = {
 class DatabaseService {
   private listeners: (() => void)[] = [];
   private unsubscribes: (() => void)[] = [];
+  private electionEndInterval: ReturnType<typeof setInterval> | null = null;
 
   private state = {
     students: [] as Student[],
@@ -54,9 +55,40 @@ class DatabaseService {
         setDoc(doc(firestore, 'system', 'electionState'), DEFAULT_ELECTION_STATE);
         this.state.electionState = DEFAULT_ELECTION_STATE;
       }
+      // Auto-end election when endTime has passed
+      this.checkAndAutoEndElection();
       this.notifyListeners();
     });
     this.unsubscribes.push(electionUnsub);
+
+    // Periodic check every 30s to catch election end even without Firestore events
+    this.startElectionEndTimer();
+  }
+
+  private checkAndAutoEndElection() {
+    const { status, endTime } = this.state.electionState;
+    if (status === 'active' && endTime) {
+      const end = new Date(endTime).getTime();
+      if (!isNaN(end) && Date.now() >= end) {
+        this.state.electionState.status = 'completed';
+        // Persist the change to Firestore
+        if (firestore) {
+          updateDoc(doc(firestore, 'system', 'electionState'), { status: 'completed' }).catch(() => {});
+        }
+        this.addLog('Election Auto-Ended', 'Election automatically ended because the scheduled end time was reached.', 'warning');
+      }
+    }
+  }
+
+  private startElectionEndTimer() {
+    if (this.electionEndInterval) clearInterval(this.electionEndInterval);
+    this.electionEndInterval = setInterval(() => {
+      const prevStatus = this.state.electionState.status;
+      this.checkAndAutoEndElection();
+      if (prevStatus !== this.state.electionState.status) {
+        this.notifyListeners();
+      }
+    }, 30000); // Check every 30 seconds
   }
 
   public subscribe(listener: () => void) {
@@ -134,8 +166,10 @@ class DatabaseService {
       if (fetchedStudents.length === 0) {
          const allSnapshot = await getDocs(collection(firestore, 'students'));
          const allStudents = allSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Student[];
+         const normalize = (c: string) => c.replace(/[\s\-_]+/g, '').replace(/class/gi, '').toLowerCase();
+         const normClass = normalize(className);
          fetchedStudents = allStudents.filter(s => 
-           (s.className || '').trim().toLowerCase() === className.trim().toLowerCase()
+           normalize(s.className || '') === normClass
          );
       }
 

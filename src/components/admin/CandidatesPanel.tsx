@@ -108,13 +108,16 @@ export const CandidatesPanel: React.FC<CandidatesPanelProps> = ({ candidates, re
             <input type="file" accept="image/*" onChange={e => {
               const file = e.target.files?.[0];
               if (!file) return;
-              if (file.size > 10 * 1024 * 1024) {
-                alert('Image size exceeds 10MB limit. Please choose a smaller file.');
+              if (file.size > 2 * 1024 * 1024) {
+                alert('Image size exceeds 2MB limit. Please choose a smaller file.');
                 e.target.value = '';
                 return;
               }
-              const url = URL.createObjectURL(file);
-              setCandPhoto(url);
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                setCandPhoto(reader.result as string);
+              };
+              reader.readAsDataURL(file);
             }} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white" />
           </div>
           <div className="md:col-span-3 flex justify-end gap-3 pt-2">
