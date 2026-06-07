@@ -10,9 +10,28 @@ export const CampaignPosters: React.FC = () => {
 
   const houses = ['All', 'Blue', 'Red', 'Green', 'Yellow'];
 
+  const getHouseColor = (house: string) => {
+    switch (house) {
+      case 'Blue': return 'border-blue-500 shadow-blue-500/20';
+      case 'Red': return 'border-red-500 shadow-red-500/20';
+      case 'Green': return 'border-green-500 shadow-green-500/20';
+      case 'Yellow': return 'border-yellow-500 shadow-yellow-500/20';
+      default: return 'border-slate-800/80 shadow-xl';
+    }
+  };
+
   const filteredCandidates = filterHouse === 'All'
     ? candidates
     : candidates.filter(c => c.house === filterHouse);
+
+  const sortedCandidates = [...filteredCandidates].sort((a, b) => {
+    const isHeadA = a.position === 'Head Boy' || a.position === 'Head Girl';
+    const isHeadB = b.position === 'Head Boy' || b.position === 'Head Girl';
+    
+    if (isHeadA && !isHeadB) return -1;
+    if (!isHeadA && isHeadB) return 1;
+    return 0;
+  });
 
   return (
     <section className="py-12 px-4 md:px-8 max-w-7xl mx-auto">
@@ -42,11 +61,11 @@ export const CampaignPosters: React.FC = () => {
 
       {/* Posters Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-        {filteredCandidates.map(candidate => (
+        {sortedCandidates.map(candidate => (
           <motion.div
             key={candidate.id}
             whileHover={{ y: -6 }}
-            className="glass-panel rounded-3xl overflow-hidden border border-slate-800/80 group cursor-pointer flex flex-col justify-between shadow-xl"
+            className={`glass-panel rounded-3xl overflow-hidden border group cursor-pointer flex flex-col justify-between shadow-xl ${getHouseColor(candidate.house)}`}
             onClick={() => setSelectedPoster(candidate.id)}
           >
             <div className="h-64 overflow-hidden relative bg-slate-900">
@@ -108,7 +127,7 @@ export const CampaignPosters: React.FC = () => {
                 <motion.div
                   initial={{ scale: 0.9, y: 20 }}
                   animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-                  className="glass-panel bg-slate-900/95 border border-slate-700/80 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl shadow-indigo-500/20 relative flex flex-col md:flex-row"
+                  className={`glass-panel bg-slate-900/95 border rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl relative flex flex-col md:flex-row ${getHouseColor(cand.house)}`}
                   onClick={e => e.stopPropagation()}
                 >
                   <button
