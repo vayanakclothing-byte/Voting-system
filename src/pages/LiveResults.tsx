@@ -147,35 +147,37 @@ export const LiveResults: React.FC = () => {
           </p>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          {/* Smart Board Toggle */}
-          <button
-            onClick={() => setSmartBoardMode(!smartBoardMode)}
-            className={`px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border ${smartBoardMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 border-indigo-400/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'}`}
-          >
-            <FaTv className="text-base" />
-            <span>{smartBoardMode ? 'Exit Smart Board Mode' : 'Smart Board Mode'}</span>
-          </button>
+        {/* Action Controls - ONLY VISIBLE TO ADMIN */}
+        {isAdminLoggedIn && (
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            {/* Smart Board Toggle */}
+            <button
+              onClick={() => setSmartBoardMode(!smartBoardMode)}
+              className={`px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border ${smartBoardMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 border-indigo-400/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'}`}
+            >
+              <FaTv className="text-base" />
+              <span>{smartBoardMode ? 'Exit Smart Board Mode' : 'Smart Board Mode'}</span>
+            </button>
 
-          {/* Celebrate Winners Toggle */}
-          <button
-            onClick={() => setCelebrateWinners(!celebrateWinners)}
-            className={`px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border ${celebrateWinners ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/30 border-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border-slate-700'}`}
-          >
-            <FaTrophy className="text-base" />
-            <span>{celebrateWinners ? 'Stop Celebration' : 'Celebrate Winners'}</span>
-          </button>
+            {/* Celebrate Winners Toggle */}
+            <button
+              onClick={() => setCelebrateWinners(!celebrateWinners)}
+              className={`px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border ${celebrateWinners ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/30 border-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border-slate-700'}`}
+            >
+              <FaTrophy className="text-base" />
+              <span>{celebrateWinners ? 'Stop Celebration' : 'Celebrate Winners'}</span>
+            </button>
 
-          {/* Share QR Code Toggle */}
-          <button
-            onClick={() => setShowQR(true)}
-            className="px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border bg-slate-800 hover:bg-slate-700 text-indigo-400 border-slate-700 hover:border-indigo-500/50"
-          >
-            <FaQrcode className="text-base" />
-            <span>Share QR Code</span>
-          </button>
-        </div>
+            {/* Share QR Code Toggle */}
+            <button
+              onClick={() => setShowQR(true)}
+              className="px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border bg-slate-800 hover:bg-slate-700 text-indigo-400 border-slate-700 hover:border-indigo-500/50"
+            >
+              <FaQrcode className="text-base" />
+              <span>Share QR Code</span>
+            </button>
+          </div>
+        )}
 
         {/* Ambient background glow decoration */}
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />

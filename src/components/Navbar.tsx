@@ -75,69 +75,69 @@ export const Navbar: React.FC = () => {
         </div>
 
         {/* Right: Quick Tools & Navigation Actions */}
-        <div className="flex items-center gap-2 md:gap-3">
-          {/* QR Code Voting Popup Button */}
-          <button
-            onClick={() => setIsQRModalOpen(true)}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all tooltip hidden sm:block"
-            title="Smart Board QR Voting"
-          >
-            <FaQrcode className="text-base md:text-lg text-indigo-400" />
-          </button>
+        {(isAdminLoggedIn || currentStudent) && (
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* QR Code Voting Popup Button */}
+            <button
+              onClick={() => setIsQRModalOpen(true)}
+              className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all tooltip hidden sm:block"
+              title="Smart Board QR Voting"
+            >
+              <FaQrcode className="text-base md:text-lg text-indigo-400" />
+            </button>
 
-          {/* Voice Announcement Toggle */}
-          <button
-            onClick={toggleVoiceAnnouncements}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all hidden sm:block"
-            title={voiceAnnouncements ? "Mute Voice Announcements" : "Enable Voice Announcements"}
-          >
-            {voiceAnnouncements ? <FaVolumeUp className="text-base md:text-lg text-emerald-400" /> : <FaVolumeMute className="text-base md:text-lg text-rose-400" />}
-          </button>
+            {/* Voice Announcement Toggle */}
+            <button
+              onClick={toggleVoiceAnnouncements}
+              className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all hidden sm:block"
+              title={voiceAnnouncements ? "Mute Voice Announcements" : "Enable Voice Announcements"}
+            >
+              {voiceAnnouncements ? <FaVolumeUp className="text-base md:text-lg text-emerald-400" /> : <FaVolumeMute className="text-base md:text-lg text-rose-400" />}
+            </button>
 
+            {/* Fullscreen Toggle */}
+            <button
+              onClick={toggleFullscreen}
+              className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all hidden sm:block"
+              title="Fullscreen Election Mode"
+            >
+              {isFullscreen ? <FaCompress className="text-base md:text-lg text-blue-400" /> : <FaExpand className="text-base md:text-lg text-blue-400" />}
+            </button>
 
-
-          {/* Fullscreen Toggle */}
-          <button
-            onClick={toggleFullscreen}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all hidden sm:block"
-            title="Fullscreen Election Mode"
-          >
-            {isFullscreen ? <FaCompress className="text-base md:text-lg text-blue-400" /> : <FaExpand className="text-base md:text-lg text-blue-400" />}
-          </button>
-
-          {/* Admin / Logout Actions */}
-          {isAdminLoggedIn ? (
-            <div className="flex items-center gap-2">
-              {location.pathname !== '/admin' && (
+            {/* Admin / Logout Actions */}
+            {isAdminLoggedIn ? (
+              <div className="flex items-center gap-2">
+                {location.pathname !== '/admin' && (
+                  <button
+                    onClick={() => navigate('/admin')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs md:text-sm shadow-lg shadow-indigo-600/30 transition-all border border-indigo-400/30"
+                  >
+                    <FaUserShield />
+                    <span className="hidden md:inline">Dashboard</span>
+                  </button>
+                )}
                 <button
-                  onClick={() => navigate('/admin')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs md:text-sm shadow-lg shadow-indigo-600/30 transition-all border border-indigo-400/30"
+                  onClick={logoutAdmin}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-semibold text-xs md:text-sm border border-rose-500/30 transition-all"
+                  title="Admin Logout"
                 >
-                  <FaUserShield />
-                  <span className="hidden md:inline">Dashboard</span>
+                  <FaSignOutAlt />
                 </button>
-              )}
+              </div>
+            ) : (
               <button
-                onClick={logoutAdmin}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-semibold text-xs md:text-sm border border-rose-500/30 transition-all"
-                title="Admin Logout"
+                onClick={() => {
+                  logoutStudent();
+                  navigate('/');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white font-semibold text-xs md:text-sm border border-rose-500/30 transition-all"
               >
                 <FaSignOutAlt />
+                <span className="hidden md:inline">Exit Session</span>
               </button>
-            </div>
-          ) : currentStudent ? (
-            <button
-              onClick={() => {
-                logoutStudent();
-                navigate('/');
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white font-semibold text-xs md:text-sm border border-rose-500/30 transition-all"
-            >
-              <FaSignOutAlt />
-              <span className="hidden md:inline">Exit Session</span>
-            </button>
-          ) : null}
-        </div>
+            )}
+          </div>
+        )}
       </header>
 
       {/* QR Modal Popup */}
