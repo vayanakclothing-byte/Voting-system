@@ -12,11 +12,48 @@ export const CampaignPosters: React.FC = () => {
 
   const getHouseColor = (house: string) => {
     switch (house) {
-      case 'Blue': return 'border-blue-500 shadow-blue-500/20';
-      case 'Red': return 'border-red-500 shadow-red-500/20';
-      case 'Green': return 'border-green-500 shadow-green-500/20';
-      case 'Yellow': return 'border-yellow-500 shadow-yellow-500/20';
-      default: return 'border-slate-800/80 shadow-xl';
+      case 'Blue': return 'glass-card-blue shadow-blue-500/30 border-blue-500/50';
+      case 'Red': return 'glass-card-red shadow-red-500/30 border-red-500/50';
+      case 'Green': return 'glass-card-green shadow-green-500/30 border-green-500/50';
+      case 'Yellow': return 'glass-card-yellow shadow-yellow-500/30 border-yellow-500/50';
+      default: return 'glass-panel border-slate-800/80 shadow-xl';
+    }
+  };
+
+  const getObjectives = (position: string) => {
+    switch (position) {
+      case 'Head Boy':
+      case 'Head Girl':
+        return [
+          'Bridge the gap between students and management.',
+          'Lead the student council to organize mega events.',
+          'Ensure a positive and inclusive school environment.'
+        ];
+      case 'Sports Captain':
+        return [
+          'Promote athletic excellence and sportsmanship.',
+          'Organize inter-house tournaments and sports meets.',
+          'Ensure proper maintenance of sports equipment.'
+        ];
+      case 'Discipline Captain':
+        return [
+          'Maintain decorum and discipline on campus.',
+          'Implement fair rules and monitor compliance.',
+          'Assist teachers in managing large gatherings.'
+        ];
+      case 'House Captain':
+      case 'House Vice Captain':
+        return [
+          'Lead the house to victory in inter-house competitions.',
+          'Discover and nurture talents within the house.',
+          'Maintain high house spirit and participation.'
+        ];
+      default:
+        return [
+          'Represent student interests effectively.',
+          'Work collaboratively with other council members.',
+          'Bring positive changes to the school.'
+        ];
     }
   };
 
@@ -167,9 +204,9 @@ export const CampaignPosters: React.FC = () => {
                       <div className="space-y-3 text-xs text-slate-300">
                         <h4 className="font-bold text-slate-400 uppercase tracking-wider">Key Objectives:</h4>
                         <ul className="list-disc list-inside space-y-1.5 text-slate-300/90">
-                          <li>Foster student unity and collaborative lab projects.</li>
-                          <li>Enhance sports facilities and inter-house discipline.</li>
-                          <li>Represent student grievances directly to the Principal.</li>
+                          {getObjectives(cand.position).map((obj, idx) => (
+                            <li key={idx}>{obj}</li>
+                          ))}
                         </ul>
                       </div>
                     </div>
