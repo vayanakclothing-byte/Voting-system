@@ -9,9 +9,10 @@ interface ConfirmVoteModalProps {
   onClose: () => void;
   onConfirm: () => Promise<void> | void;
   selections: { [position: string]: string };
+  races: { id: string; title: string; position: string; houseFilter: string }[];
 }
 
-export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onClose, onConfirm, selections }) => {
+export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onClose, onConfirm, selections, races }) => {
   const { candidates, currentStudent } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -75,15 +76,15 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
           {/* Selections List */}
           <div className="space-y-3 mb-8 max-h-[50vh] overflow-y-auto pr-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 sticky top-0 bg-slate-900/95 py-1 z-10">Your Chosen Candidates:</h3>
-            {positions.map(pos => {
-              const candidateId = selections[pos];
+            {races.map(race => {
+              const candidateId = selections[race.id];
               const candidate = candidates.find(c => c.id === candidateId);
 
               return (
-                <div key={pos} className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-800/40 p-3.5 rounded-2xl border border-slate-700/60 gap-2 sm:gap-4">
+                <div key={race.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-800/40 p-3.5 rounded-2xl border border-slate-700/60 gap-2 sm:gap-4">
                   <div className="flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                    <span className="text-xs md:text-sm font-semibold text-slate-300">{pos}:</span>
+                    <span className={`w-2 h-2 rounded-full ${race.houseFilter === 'Blue' ? 'bg-blue-500' : race.houseFilter === 'Red' ? 'bg-red-500' : race.houseFilter === 'Green' ? 'bg-green-500' : race.houseFilter === 'Yellow' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
+                    <span className="text-xs md:text-sm font-semibold text-slate-300">{race.title === race.position ? race.title : `${race.title} ${race.position}`}:</span>
                   </div>
                   {candidate ? (
                     <div className="flex items-center gap-2.5 self-end sm:self-auto">

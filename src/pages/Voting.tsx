@@ -41,42 +41,59 @@ export const Voting: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
 
-  // Dynamic voting steps based on user type
-  const races = React.useMemo(() => {
+  // Dynamic voting steps (pages) based on user type
+  const pages = React.useMemo(() => {
     if (!currentStudent) return [];
     
-    const steps: { id: string; title: string; position: string; houseFilter: string }[] = [];
+    type Race = { id: string; title: string; position: string; houseFilter: string };
+    const p: { title: string; races: Race[] }[] = [];
     
     // Global positions for everyone
     GLOBAL_POSITIONS.forEach(pos => {
-      steps.push({ id: pos, title: pos, position: pos, houseFilter: 'All' });
+      p.push({
+        title: pos,
+        races: [{ id: pos, title: pos, position: pos, houseFilter: 'All' }]
+      });
     });
 
     if (currentStudent.isTeacher) {
-      // Teachers vote for all house positions across all houses
+      // Teachers vote for all house positions, grouped by position
       HOUSE_POSITIONS.forEach(pos => {
-        ['Blue', 'Red', 'Green', 'Yellow'].forEach(house => {
-          steps.push({ 
-            id: `${house} ${pos}`, 
-            title: `${house} ${pos}`, 
-            position: pos, 
-            houseFilter: house 
-          });
+        const houseRaces = ['Blue', 'Red', 'Green', 'Yellow'].map(house => ({
+          id: `${house} ${pos}`, 
+          title: `${house} House`, 
+          position: pos, 
+          houseFilter: house 
+        }));
+        p.push({
+          title: `${pos}s`,
+          races: houseRaces
         });
       });
     } else {
       // Students vote only for their house's positions
       HOUSE_POSITIONS.forEach(pos => {
-        steps.push({ 
-          id: pos, 
-          title: pos, 
-          position: pos, 
-          houseFilter: currentStudent.house 
+        p.push({
+          title: pos,
+          races: [{ 
+            id: pos, 
+            title: pos, 
+            position: pos, 
+            houseFilter: currentStudent.house 
+          }]
         });
       });
     }
-    return steps;
+    return p;
   }, [currentStudent]);
+
+  // Filter logic based on the race
+  const getCandidatesForRace = (race: typeof pages[0]['races'][0]) => {
+    if (race.houseFilter === 'All') {
+       return candidates.filter(c => c.position === race.position);
+    }
+    return candidates.filter(c => c.position === race.position && c.house === race.houseFilter);
+  };
 
   // Auto-save selections
   useEffect(() => {
@@ -87,13 +104,6 @@ export const Voting: React.FC = () => {
 
   if (!currentStudent) return null;
 
-  // Filter logic based on the race
-  const getCandidatesForRace = (race: typeof races[0]) => {
-    if (race.houseFilter === 'All') {
-       return candidates.filter(c => c.position === race.position);
-    }
-    return candidates.filter(c => c.position === race.position && c.house === race.houseFilter);
-  };
 
   const handleSelectCandidate = (raceId: string, candidateId: string) => {
     setSelections(prev => ({
@@ -102,11 +112,10 @@ export const Voting: React.FC = () => {
     }));
   };
 
-  const currentRace = races[currentStep];
-  const currentPosCandidates = currentRace ? getCandidatesForRace(currentRace) : [];
+  const currentPage = pages[currentStep];
 
   const handleNext = () => {
-     if (currentStep < races.length - 1) {
+     if (currentStep < pages.length - 1) {
         setCurrentStep(prev => prev + 1);
         window.scrollTo(0,0);
      } else {
@@ -122,11 +131,12 @@ export const Voting: React.FC = () => {
   };
 
   const handleOpenConfirm = () => {
-    // Validate that student has selected a candidate for all races
-    const missingRaces = races.filter(r => !selections[r.id]);
+    // Validate that student has selected a candidate for all races across all pages
+    const allRaces = pages.flatMap(p => p.races);
+    const missingRaces = allRaces.filter(r => !selections[r.id]);
 
     if (missingRaces.length > 0) {
-      const proceed = window.confirm(`You have not selected candidates for: ${missingRaces.map(r => r.title).join(', ')}. Do you wish to proceed with an incomplete ballot?`);
+      const proceed = window.confirm(`You have not selected candidates for: ${missingRaces.map(r => r.title === r.position ? r.title : `${r.title} ${r.position}`).join(', ')}. Do you wish to proceed with an incomplete ballot?`);
       if (!proceed) return;
     }
 
@@ -165,13 +175,13 @@ export const Voting: React.FC = () => {
             Cast Your Encrypted Ballot
           </h1>
           <p className="text-xs md:text-sm text-slate-300 max-w-xl leading-relaxed">
-            Welcome, <strong className="text-white font-bold">{currentStudent.name}</strong>. {currentRace?.houseFilter === 'All' ? (
+            Welcome, <strong className="text-white font-bold">{currentStudent.name}</strong>. {currentPage?.races[0]?.houseFilter === 'All' ? (
               <span>You are viewing school leadership candidates from all houses.</span>
             ) : currentStudent.isTeacher ? (
-              <span>You are viewing candidates exclusively for the <strong className="text-white font-bold">{currentRace?.houseFilter} House</strong>.</span>
+              <span>You are viewing candidates from all houses. Please pick one leader per house.</span>
             ) : (
               <span>You are viewing candidates exclusively for your house (<strong className="text-white font-bold">{currentStudent.house} House</strong>).</span>
-            )} Please select one candidate for each position below.
+            )} Please select candidates for the roles below.
           </p>
         </div>
 
@@ -218,19 +228,19 @@ export const Voting: React.FC = () => {
       ) : (
         <div className="space-y-10 mb-12">
             <div className="flex items-center justify-between text-slate-400 text-sm font-bold mb-4">
-               <span>Voting Step {currentStep + 1} of {races.length}</span>
+               <span>Voting Step {currentStep + 1} of {pages.length}</span>
                <span className="flex items-center gap-1 text-emerald-400"><FaSave /> Progress Auto-Saved</span>
             </div>
             
             {/* Progress Bar */}
             <div className="w-full bg-slate-800 rounded-full h-2.5 mb-8">
-              <div className="bg-indigo-500 h-2.5 rounded-full transition-all duration-500" style={{ width: `${((currentStep + 1) / races.length) * 100}%` }}></div>
+              <div className="bg-indigo-500 h-2.5 rounded-full transition-all duration-500" style={{ width: `${((currentStep + 1) / pages.length) * 100}%` }}></div>
             </div>
 
             <AnimatePresence mode="wait">
-              {currentRace && (
+              {currentPage && (
                 <motion.section 
-                  key={currentRace.id}
+                  key={currentPage.title}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
@@ -240,49 +250,63 @@ export const Voting: React.FC = () => {
                   {/* Category Header */}
                   <div className="mb-6">
                      <div className="inline-block px-3 py-1 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold uppercase tracking-wider border border-slate-700 mb-4">
-                        {currentRace.houseFilter === 'All' ? "School Leadership" : `${currentRace.houseFilter} House Election`}
+                        {currentPage.races[0]?.houseFilter === 'All' ? "School Leadership" : (currentStudent.isTeacher ? "Inter-House Elections" : "Your House Elections")}
                      </div>
                   </div>
 
                   {/* Position Header */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-slate-800">
                     <div>
                       <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                        <span>{currentRace.title}</span>
-                        {selections[currentRace.id] && (
-                          <FaCheckCircle className="text-emerald-400 text-lg" title="Candidate Selected" />
-                        )}
+                        <span>{currentPage.title}</span>
                       </h2>
-                      <p className="text-xs text-slate-400">Select your preferred leader for this role.</p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-400 font-medium">Selected:</span>
-                      <span className={`text-xs font-bold px-3 py-1 rounded-xl border ${selections[currentRace.id] ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
-                        {selections[currentRace.id]
-                          ? currentPosCandidates.find(c => c.id === selections[currentRace.id])?.name
-                          : 'None Selected'}
-                      </span>
+                      <p className="text-xs text-slate-400">Select your preferred leaders for this category.</p>
                     </div>
                   </div>
 
-                  {/* Candidate Cards Grid */}
-                  {currentPosCandidates.length === 0 ? (
-                    <div className="bg-slate-950/60 p-6 rounded-2xl border border-slate-800/80 text-center text-xs text-slate-400 font-medium">
-                      No candidates registered for {currentRace.title}.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                      {currentPosCandidates.map(candidate => (
-                        <CandidateCard
-                          key={candidate.id}
-                          candidate={candidate}
-                          isSelected={selections[currentRace.id] === candidate.id}
-                          onSelect={(id) => handleSelectCandidate(currentRace.id, id)}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  {/* Races in this Page */}
+                  <div className="space-y-12">
+                    {currentPage.races.map(race => {
+                      const currentPosCandidates = getCandidatesForRace(race);
+                      const isMultiRace = currentPage.races.length > 1;
+
+                      return (
+                        <div key={race.id} className={isMultiRace ? "bg-slate-950/40 p-6 rounded-2xl border border-slate-800/60" : ""}>
+                          {isMultiRace && (
+                            <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-800">
+                              <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+                                {race.houseFilter === 'Blue' && <span className="w-3 h-3 rounded-full bg-blue-500"></span>}
+                                {race.houseFilter === 'Red' && <span className="w-3 h-3 rounded-full bg-red-500"></span>}
+                                {race.houseFilter === 'Green' && <span className="w-3 h-3 rounded-full bg-green-500"></span>}
+                                {race.houseFilter === 'Yellow' && <span className="w-3 h-3 rounded-full bg-amber-500"></span>}
+                                {race.title}
+                              </h3>
+                              {selections[race.id] && (
+                                <FaCheckCircle className="text-emerald-400 text-lg" title="Candidate Selected" />
+                              )}
+                            </div>
+                          )}
+
+                          {currentPosCandidates.length === 0 ? (
+                            <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800/80 text-center text-xs text-slate-400 font-medium">
+                              No candidates registered for {race.title}.
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                              {currentPosCandidates.map(candidate => (
+                                <CandidateCard
+                                  key={candidate.id}
+                                  candidate={candidate}
+                                  isSelected={selections[race.id] === candidate.id}
+                                  onSelect={(id) => handleSelectCandidate(race.id, id)}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                   
                   {/* Navigation inside card */}
                   <div className="mt-10 flex items-center justify-between border-t border-slate-800 pt-6">
@@ -302,7 +326,7 @@ export const Voting: React.FC = () => {
                        onClick={handleNext}
                        className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors flex items-center gap-2"
                      >
-                       {currentStep === races.length - 1 ? 'Review Ballot' : 'Next Position'} <FaArrowRight />
+                       {currentStep === pages.length - 1 ? 'Review Ballot' : 'Next Position'} <FaArrowRight />
                      </button>
                   </div>
                 </motion.section>
@@ -322,7 +346,7 @@ export const Voting: React.FC = () => {
             <div>
               <span className="text-slate-400">Positions Selected: </span>
               <strong className="text-white font-bold">
-                {Object.keys(selections).filter(pos => selections[pos]).length} / {races.length}
+                {Object.keys(selections).filter(pos => selections[pos]).length} / {pages.flatMap(p => p.races).length}
               </strong>
             </div>
             <div className="hidden sm:block text-slate-600">|</div>
