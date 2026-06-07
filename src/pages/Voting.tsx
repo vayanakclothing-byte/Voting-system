@@ -392,6 +392,7 @@ export const Voting: React.FC = () => {
         onClose={() => setIsConfirmModalOpen(false)}
         onConfirm={handleFinalConfirmVote}
         selections={selections}
+        races={pages.flatMap(p => p.races)}
       />
     </main>
   );
