@@ -60,27 +60,47 @@ export const LiveResults: React.FC = () => {
       });
   }, [votes]);
 
-  // Determine winners for each position
-  const winners = useMemo(() => {
-    const result: { [pos: string]: typeof candidates[0] | null } = {};
-    positions.forEach(pos => {
-      const posCands = candidates.filter(c => c.position === pos);
-      if (posCands.length === 0) {
-        result[pos] = null;
-        return;
-      }
-      let maxVotes = 0;
-      let winner: typeof candidates[0] | null = null;
-      posCands.forEach(c => {
-        if (c.votesCount > maxVotes) {
-          maxVotes = c.votesCount;
-          winner = c;
+  // Determine races and winners for each specific contest
+  const races = useMemo(() => {
+    const result: { title: string, position: string, houseFilter: string, cands: typeof candidates, totalVotes: number, winner: typeof candidates[0] | null }[] = [];
+    
+    GLOBAL_POSITIONS.forEach(pos => {
+      const cands = candidates.filter(c => c.position === pos);
+      if (cands.length === 0) return;
+      let max = 0;
+      let w = null;
+      cands.forEach(c => { if(c.votesCount > max) { max = c.votesCount; w = c; } });
+      result.push({
+        title: pos,
+        position: pos,
+        houseFilter: 'All',
+        cands,
+        totalVotes: cands.reduce((s, c) => s + c.votesCount, 0),
+        winner: w
+      });
+    });
+
+    HOUSE_POSITIONS.forEach(pos => {
+      ['Blue', 'Red', 'Green', 'Yellow'].forEach(house => {
+        const cands = candidates.filter(c => c.position === pos && c.house === house);
+        if (cands.length > 0) {
+          let max = 0;
+          let w = null;
+          cands.forEach(c => { if(c.votesCount > max) { max = c.votesCount; w = c; } });
+          result.push({
+            title: `${house} ${pos}`,
+            position: pos,
+            houseFilter: house,
+            cands,
+            totalVotes: cands.reduce((s, c) => s + c.votesCount, 0),
+            winner: w
+          });
         }
       });
-      result[pos] = winner;
     });
+
     return result;
-  }, [candidates, positions]);
+  }, [candidates]);
 
   return (
     <main className={`min-h-screen pb-20 pt-8 px-4 md:px-8 max-w-7xl mx-auto relative z-10 transition-all duration-500 ${smartBoardMode ? 'max-w-full px-8 py-12 bg-slate-950' : ''}`}>
@@ -235,22 +255,20 @@ export const LiveResults: React.FC = () => {
       <AnimatePresence mode="wait">
         {activeTab === 'positions' && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="space-y-12 mb-12">
-            {positions.map(pos => {
-              const posCands = candidates.filter(c => c.position === pos);
-              const totalPosVotes = posCands.reduce((sum, c) => sum + c.votesCount, 0);
-              const winner = winners[pos];
+            {races.map(race => {
+              const { title, position, cands: posCands, totalVotes: totalPosVotes, winner, houseFilter } = race;
 
               return (
-                <section key={pos} className="glass-panel bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl">
+                <section key={title} className="glass-panel bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl">
                   {/* Position Header & Winner Highlight */}
                   <div className="mb-4">
                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-800 px-2 py-1 rounded-lg border border-slate-700">
-                        {GLOBAL_POSITIONS.includes(pos) ? "School Leadership" : "House Position"}
+                        {houseFilter === 'All' ? "School Leadership" : `${houseFilter} House Election`}
                      </span>
                   </div>
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-4 border-b border-slate-800">
                     <div>
-                      <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight mb-1">{pos}</h2>
+                      <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight mb-1">{title}</h2>
                       <p className="text-xs text-slate-400">Total votes recorded for this role: <strong className="text-slate-200 font-bold">{totalPosVotes}</strong></p>
                     </div>
 
@@ -332,9 +350,8 @@ export const LiveResults: React.FC = () => {
         {/* Tab 2: Analytics Bar & Pie Charts */}
         {activeTab === 'analytics' && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            {positions.map(pos => {
-              const posCands = candidates.filter(c => c.position === pos);
-              const chartData = posCands.map(c => ({
+            {races.map(race => {
+              const chartData = race.cands.map(c => ({
                 name: c.name,
                 votes: c.votesCount,
                 house: c.house,
@@ -342,9 +359,9 @@ export const LiveResults: React.FC = () => {
               }));
 
               return (
-                <div key={pos} className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl flex flex-col justify-between">
+                <div key={race.title} className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl flex flex-col justify-between">
                   <div>
-                    <h3 className="text-xl font-extrabold text-white mb-1">{pos} Distribution</h3>
+                    <h3 className="text-xl font-extrabold text-white mb-1">{race.title} Distribution</h3>
                     <p className="text-xs text-slate-400 mb-6">Visual vote share breakdown across candidates.</p>
                   </div>
 
