@@ -268,13 +268,20 @@ class DatabaseService {
         let isManual = false;
         const collectionName = className === 'Teacher' ? 'teachers' : 'students';
         
-        // Validation: Verify all required positions are present.
-        // For students, both GLOBAL and HOUSE. For teachers, GLOBAL (and possibly HOUSE depending on rules, but we'll check based on what is expected)
-        const expectedPositions = className === 'Teacher' ? [...GLOBAL_POSITIONS, ...HOUSE_POSITIONS] : [...GLOBAL_POSITIONS, ...HOUSE_POSITIONS];
+        // Validation: Verify all required positions are present based on role.
+        let expectedPositions: string[] = [...GLOBAL_POSITIONS];
+        if (className === 'Teacher') {
+          HOUSE_POSITIONS.forEach(pos => {
+            ['Blue', 'Red', 'Green', 'Yellow'].forEach(h => expectedPositions.push(`${h} ${pos}`));
+          });
+        } else {
+          expectedPositions.push(...HOUSE_POSITIONS);
+        }
+        
         const votedPositionKeys = Object.keys(votedCandidates);
         
         const missingPositions = expectedPositions.filter(pos => !votedPositionKeys.includes(pos));
-        if (missingPositions.length > 0 && !isManual) { // manual could be a teacher making a quick exception, but let's enforce it broadly. Actually let's just warn or allow partial if we wanted, but prompt said prevent skipping required positions.
+        if (missingPositions.length > 0 && !isManual) { 
              throw new Error(`MISSING_POSITIONS:${missingPositions.join(',')}`);
         }
         
