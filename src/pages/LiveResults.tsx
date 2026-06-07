@@ -10,7 +10,7 @@ import Confetti from 'react-confetti';
 import { GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../types';
 
 export const LiveResults: React.FC = () => {
-  const { candidates, students, votes, electionState, refreshData } = useApp();
+  const { candidates, students, votes, electionState, refreshData, isAdminLoggedIn, currentStudent } = useApp();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -121,13 +121,15 @@ export const LiveResults: React.FC = () => {
       <div className="glass-panel bg-slate-900/80 border border-slate-800 rounded-3xl p-6 md:p-8 mb-10 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-slate-700"
-              title="Go Back"
-            >
-              <FaArrowLeft />
-            </button>
+            {(isAdminLoggedIn || currentStudent) && (
+              <button
+                onClick={() => navigate(-1)}
+                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-slate-700"
+                title="Go Back"
+              >
+                <FaArrowLeft />
+              </button>
+            )}
             <span className="text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-xl border border-indigo-500/30">
               Live Results & Analytics
             </span>

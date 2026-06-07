@@ -130,7 +130,7 @@ export const Navbar: React.FC = () => {
               <FaSignOutAlt />
               <span className="hidden md:inline">Exit Session</span>
             </button>
-          ) : (
+          ) : location.pathname !== '/results' ? (
             <button
               onClick={() => navigate('/admin')}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs md:text-sm border border-slate-700 transition-all"
@@ -138,7 +138,7 @@ export const Navbar: React.FC = () => {
               <FaUserShield className="text-indigo-400" />
               <span className="hidden md:inline">Admin</span>
             </button>
-          )}
+          ) : null}
         </div>
       </header>
 
