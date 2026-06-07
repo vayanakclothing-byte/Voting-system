@@ -154,7 +154,7 @@ export const Login: React.FC = () => {
       return;
     }
 
-    const matchedStudent = classStudents.find(s => s.name.toLowerCase() === studentNameInput.trim().toLowerCase());
+    const matchedStudent = classStudents.find(s => s.name.trim().toLowerCase() === studentNameInput.trim().toLowerCase());
     if (!matchedStudent && !isManualMode) {
         alert(role === 'teacher' ? "The selected teacher is not valid." : "The selected student is not valid for this class.");
         return;
