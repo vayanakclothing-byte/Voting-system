@@ -17,6 +17,7 @@ const Confirmation = lazy(() => import('./pages/Confirmation').then(module => ({
 const AdminLogin = lazy(() => import('./pages/AdminLogin').then(module => ({ default: module.AdminLogin })));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 const LiveResults = lazy(() => import('./pages/LiveResults').then(module => ({ default: module.LiveResults })));
+const PublicLiveResults = lazy(() => import('./pages/PublicLiveResults').then(module => ({ default: module.PublicLiveResults })));
 
 const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -45,6 +46,7 @@ const AnimatedRoutes = () => {
           <Route path="/admin-login" element={<PageTransition><AdminLogin /></PageTransition>} />
           <Route path="/admin" element={<PageTransition><ProtectedRoute><AdminDashboard /></ProtectedRoute></PageTransition>} />
           <Route path="/results" element={<PageTransition><LiveResults /></PageTransition>} />
+          <Route path="/public-results" element={<PageTransition><PublicLiveResults /></PageTransition>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

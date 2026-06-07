@@ -21,6 +21,8 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
+  if (location.pathname === '/public-results') return null;
+
   const getHouseBadgeColor = () => {
     switch (selectedHouse) {
       case 'Blue': return 'bg-blue-500/20 text-blue-300 border-blue-500/30';

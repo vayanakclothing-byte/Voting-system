@@ -9,9 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Confetti from 'react-confetti';
 import { GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../types';
 
-export const LiveResults: React.FC = () => {
-  const { candidates, students, votes, electionState, refreshData, isAdminLoggedIn, currentStudent } = useApp();
-  const navigate = useNavigate();
+export const PublicLiveResults: React.FC = () => {
+  const { candidates, students, votes, electionState, refreshData } = useApp();
 
   useEffect(() => {
     db.fetchAllStudents().then(() => {
@@ -20,9 +19,6 @@ export const LiveResults: React.FC = () => {
   }, []);
 
   const [activeTab, setActiveTab] = useState<'positions' | 'analytics' | 'houses' | 'timeline'>('positions');
-  const [smartBoardMode, setSmartBoardMode] = useState<boolean>(false);
-  const [celebrateWinners, setCelebrateWinners] = useState<boolean>(false);
-  const [showQR, setShowQR] = useState<boolean>(false);
 
   const positions = [...GLOBAL_POSITIONS, ...HOUSE_POSITIONS];
 
@@ -105,33 +101,18 @@ export const LiveResults: React.FC = () => {
   }, [candidates]);
 
   return (
-    <main className={`min-h-screen pb-20 pt-8 px-4 md:px-8 max-w-7xl mx-auto relative z-10 transition-all duration-500 ${smartBoardMode ? 'max-w-full px-8 py-12 bg-slate-950' : ''}`}>
-      {/* Celebration Confetti */}
-      {celebrateWinners && (
-        <Confetti
-          width={window.innerWidth}
-          height={window.innerHeight}
-          recycle={true}
-          numberOfPieces={150}
-          gravity={0.1}
-        />
-      )}
-
-      {/* Top Header & Smart Board Controls */}
-      <div className="glass-panel bg-slate-900/80 border border-slate-800 rounded-3xl p-6 md:p-8 mb-10 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 font-['Outfit',sans-serif] selection:bg-indigo-500 selection:text-white pb-20 pt-8 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto relative z-10">
+      
+      {/* Top Header */}
+      <div className="glass-panel bg-slate-900/80 border border-slate-800 rounded-3xl p-6 md:p-8 mb-10 shadow-2xl flex flex-col items-center text-center relative overflow-hidden">
+        <div className="w-16 h-16 mb-4">
+          <img src="/logo.png" alt="Royal Academy Logo" className="w-full h-full object-contain filter drop-shadow-md" onError={(e) => { (e.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/shapes/svg?seed=RA'; }} />
+        </div>
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            {(isAdminLoggedIn || currentStudent) && (
-              <button
-                onClick={() => navigate(-1)}
-                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-slate-700"
-                title="Go Back"
-              >
-                <FaArrowLeft />
-              </button>
-            )}
+          <div className="flex items-center justify-center gap-2 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-xl border border-indigo-500/30">
-              Live Results & Analytics
+              Public Live Results
             </span>
             <span className="text-xs text-slate-400 font-semibold flex items-center gap-1.5 bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">
               <FaSyncAlt className="animate-spin text-indigo-400" />
@@ -139,45 +120,13 @@ export const LiveResults: React.FC = () => {
             </span>
           </div>
 
-          <h1 className={`font-extrabold text-white tracking-tight mb-2 ${smartBoardMode ? 'text-4xl md:text-6xl' : 'text-2xl md:text-4xl'}`}>
+          <h1 className="font-extrabold text-white tracking-tight mb-2 text-2xl md:text-4xl">
             Royal Academy Election Results
           </h1>
-          <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed">
+          <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed mx-auto">
             Real-time digital vote counting, house-wise performance metrics, and winning candidate projections for the 2083 student council.
           </p>
         </div>
-
-        {/* Action Controls - ONLY VISIBLE TO ADMIN */}
-        {isAdminLoggedIn && (
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-            {/* Smart Board Toggle */}
-            <button
-              onClick={() => setSmartBoardMode(!smartBoardMode)}
-              className={`px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border ${smartBoardMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 border-indigo-400/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'}`}
-            >
-              <FaTv className="text-base" />
-              <span>{smartBoardMode ? 'Exit Smart Board Mode' : 'Smart Board Mode'}</span>
-            </button>
-
-            {/* Celebrate Winners Toggle */}
-            <button
-              onClick={() => setCelebrateWinners(!celebrateWinners)}
-              className={`px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border ${celebrateWinners ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/30 border-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border-slate-700'}`}
-            >
-              <FaTrophy className="text-base" />
-              <span>{celebrateWinners ? 'Stop Celebration' : 'Celebrate Winners'}</span>
-            </button>
-
-            {/* Share QR Code Toggle */}
-            <button
-              onClick={() => setShowQR(true)}
-              className="px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border bg-slate-800 hover:bg-slate-700 text-indigo-400 border-slate-700 hover:border-indigo-500/50"
-            >
-              <FaQrcode className="text-base" />
-              <span>Share QR Code</span>
-            </button>
-          </div>
-        )}
 
         {/* Ambient background glow decoration */}
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -477,57 +426,7 @@ export const LiveResults: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* QR Code Modal */}
-      <AnimatePresence>
-        {showQR && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-sm w-full shadow-2xl relative flex flex-col items-center text-center"
-            >
-              <button
-                onClick={() => setShowQR(false)}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors"
-              >
-                <FaTimes />
-              </button>
-              
-              <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-3xl mb-4 border border-indigo-500/30">
-                <FaQrcode />
-              </div>
-              
-              <h2 className="text-xl font-extrabold text-white mb-2">Live Results QR Code</h2>
-              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                Scan this QR code with any smartphone to instantly view these live election results. No login required!
-              </p>
-
-              <div className="bg-white p-4 rounded-2xl shadow-inner mb-6">
-                <QRCodeSVG
-                  value={window.location.origin + '/public-results'}
-                  size={200}
-                  level="H"
-                  includeMargin={false}
-                  className="rounded-lg"
-                />
-              </div>
-
-              <div className="w-full bg-slate-950 rounded-xl p-3 border border-slate-800 flex items-center justify-center overflow-hidden">
-                <span className="text-xs text-slate-500 truncate select-all font-mono">
-                  {window.location.origin}/public-results
-                </span>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </main>
+      </div>
+    </div>
   );
 };
