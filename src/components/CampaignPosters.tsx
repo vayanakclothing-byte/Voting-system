@@ -10,7 +10,10 @@ export const CampaignPosters: React.FC = () => {
 
   const houses = ['All', 'Blue', 'Red', 'Green', 'Yellow'];
 
-  const getHouseColor = (house: string) => {
+  const getCardStyle = (house: string, position: string) => {
+    if (position === 'Head Boy' || position === 'Head Girl') {
+      return 'glass-panel border-slate-800/80 shadow-xl';
+    }
     switch (house) {
       case 'Blue': return 'glass-card-blue shadow-blue-500/30 border-blue-500/50';
       case 'Red': return 'glass-card-red shadow-red-500/30 border-red-500/50';
@@ -20,41 +23,51 @@ export const CampaignPosters: React.FC = () => {
     }
   };
 
-  const getObjectives = (position: string) => {
-    switch (position) {
-      case 'Head Boy':
-      case 'Head Girl':
-        return [
-          'Bridge the gap between students and management.',
-          'Lead the student council to organize mega events.',
-          'Ensure a positive and inclusive school environment.'
-        ];
-      case 'Sports Captain':
-        return [
-          'Promote athletic excellence and sportsmanship.',
-          'Organize inter-house tournaments and sports meets.',
-          'Ensure proper maintenance of sports equipment.'
-        ];
-      case 'Discipline Captain':
-        return [
-          'Maintain decorum and discipline on campus.',
-          'Implement fair rules and monitor compliance.',
-          'Assist teachers in managing large gatherings.'
-        ];
-      case 'House Captain':
-      case 'House Vice Captain':
-        return [
-          'Lead the house to victory in inter-house competitions.',
-          'Discover and nurture talents within the house.',
-          'Maintain high house spirit and participation.'
-        ];
-      default:
-        return [
-          'Represent student interests effectively.',
-          'Work collaboratively with other council members.',
-          'Bring positive changes to the school.'
-        ];
-    }
+  const getObjectives = (candidate: any) => {
+    const hash = candidate.name.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+    const position = candidate.position;
+
+    const headPool = [
+      ['Bridge the gap between students and management.', 'Lead the student council to organize mega events.', 'Ensure a positive and inclusive school environment.'],
+      ['Promote student well-being and mental health.', 'Represent student voices in school board meetings.', 'Foster a culture of respect and academic excellence.'],
+      ['Implement new campus initiatives.', 'Enhance school infrastructure and facilities.', 'Build a stronger alumni network for mentorship.'],
+      ['Organize school-wide cultural festivals.', 'Focus on eco-friendly and sustainability projects.', 'Create better communication channels for students.']
+    ];
+
+    const sportsPool = [
+      ['Promote athletic excellence and sportsmanship.', 'Organize inter-house tournaments and sports meets.', 'Ensure proper maintenance of sports equipment.'],
+      ['Introduce new sports and fitness programs.', 'Improve training facilities and coaching access.', 'Encourage participation from all students.'],
+      ['Focus on student-athlete physical and mental health.', 'Organize friendly matches with other schools.', 'Create an intramural sports league.'],
+      ['Host regular fitness challenges.', 'Upgrade school gymnasium and fields.', 'Celebrate sports achievements with dedicated awards.']
+    ];
+
+    const disciplinePool = [
+      ['Maintain decorum and discipline on campus.', 'Implement fair rules and monitor compliance.', 'Assist teachers in managing large gatherings.'],
+      ['Promote anti-bullying campaigns.', 'Create a student-led peer mediation program.', 'Ensure a safe and secure learning environment.'],
+      ['Develop a transparent reward and consequence system.', 'Focus on positive reinforcement rather than punishment.', 'Organize workshops on ethics and behavior.'],
+      ['Bridge the gap between students and disciplinary staff.', 'Ensure smooth transitions between classes.', 'Foster a culture of mutual respect and responsibility.']
+    ];
+
+    const housePool = [
+      ['Lead the house to victory in inter-house competitions.', 'Discover and nurture talents within the house.', 'Maintain high house spirit and participation.'],
+      ['Organize weekly house meetings and bonding activities.', 'Ensure fair representation in all school events.', 'Build a strong mentorship network within the house.'],
+      ['Focus on winning the annual house cup.', 'Coordinate academic and sports tutoring for house members.', 'Create a supportive house community.'],
+      ['Host house-specific events and fundraisers.', 'Promote collaboration among junior and senior members.', 'Foster a competitive yet friendly environment.']
+    ];
+
+    const defaultPool = [
+      ['Represent student interests effectively.', 'Work collaboratively with other council members.', 'Bring positive changes to the school.'],
+      ['Focus on student feedback and actionable improvements.', 'Ensure transparency in council decisions.', 'Promote a diverse and inclusive campus.'],
+      ['Organize community service and outreach programs.', 'Support student clubs and extracurriculars.', 'Create a lasting impact during my tenure.']
+    ];
+
+    let pool = defaultPool;
+    if (position === 'Head Boy' || position === 'Head Girl') pool = headPool;
+    else if (position === 'Sports Captain') pool = sportsPool;
+    else if (position === 'Discipline Captain') pool = disciplinePool;
+    else if (position === 'House Captain' || position === 'House Vice Captain') pool = housePool;
+
+    return pool[hash % pool.length];
   };
 
   const filteredCandidates = filterHouse === 'All'
@@ -62,12 +75,33 @@ export const CampaignPosters: React.FC = () => {
     : candidates.filter(c => c.house === filterHouse);
 
   const sortedCandidates = [...filteredCandidates].sort((a, b) => {
-    const isHeadA = a.position === 'Head Boy' || a.position === 'Head Girl';
-    const isHeadB = b.position === 'Head Boy' || b.position === 'Head Girl';
+    const positionOrder: Record<string, number> = {
+      'Head Boy': 1,
+      'Head Girl': 2,
+      'Sports Captain': 3,
+      'Discipline Captain': 4,
+      'House Captain': 5,
+      'House Vice Captain': 6
+    };
     
-    if (isHeadA && !isHeadB) return -1;
-    if (!isHeadA && isHeadB) return 1;
-    return 0;
+    const posA = positionOrder[a.position] || 99;
+    const posB = positionOrder[b.position] || 99;
+    
+    if (posA !== posB) {
+      return posA - posB;
+    }
+    
+    const houseOrder: Record<string, number> = {
+      'Blue': 1,
+      'Red': 2,
+      'Green': 3,
+      'Yellow': 4
+    };
+    
+    const houseA = houseOrder[a.house] || 99;
+    const houseB = houseOrder[b.house] || 99;
+    
+    return houseA - houseB;
   });
 
   return (
@@ -102,7 +136,7 @@ export const CampaignPosters: React.FC = () => {
           <motion.div
             key={candidate.id}
             whileHover={{ y: -6 }}
-            className={`glass-panel rounded-3xl overflow-hidden border group cursor-pointer flex flex-col justify-between shadow-xl ${getHouseColor(candidate.house)}`}
+            className={`glass-panel rounded-3xl overflow-hidden border group cursor-pointer flex flex-col justify-between shadow-xl ${getCardStyle(candidate.house, candidate.position)}`}
             onClick={() => setSelectedPoster(candidate.id)}
           >
             <div className="h-64 overflow-hidden relative bg-slate-900">
@@ -164,7 +198,7 @@ export const CampaignPosters: React.FC = () => {
                 <motion.div
                   initial={{ scale: 0.9, y: 20 }}
                   animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-                  className={`glass-panel bg-slate-900/95 border rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl relative flex flex-col md:flex-row ${getHouseColor(cand.house)}`}
+                  className={`glass-panel bg-slate-900/95 border rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl relative flex flex-col md:flex-row ${getCardStyle(cand.house, cand.position)}`}
                   onClick={e => e.stopPropagation()}
                 >
                   <button
@@ -204,7 +238,7 @@ export const CampaignPosters: React.FC = () => {
                       <div className="space-y-3 text-xs text-slate-300">
                         <h4 className="font-bold text-slate-400 uppercase tracking-wider">Key Objectives:</h4>
                         <ul className="list-disc list-inside space-y-1.5 text-slate-300/90">
-                          {getObjectives(cand.position).map((obj, idx) => (
+                          {getObjectives(cand).map((obj, idx) => (
                             <li key={idx}>{obj}</li>
                           ))}
                         </ul>
