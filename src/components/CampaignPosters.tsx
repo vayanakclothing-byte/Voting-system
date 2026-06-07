@@ -75,6 +75,20 @@ export const CampaignPosters: React.FC = () => {
     : candidates.filter(c => c.house === filterHouse);
 
   const sortedCandidates = [...filteredCandidates].sort((a, b) => {
+    const houseOrder: Record<string, number> = {
+      'Blue': 1,
+      'Red': 2,
+      'Green': 3,
+      'Yellow': 4
+    };
+    
+    const houseA = houseOrder[a.house] || 99;
+    const houseB = houseOrder[b.house] || 99;
+    
+    if (houseA !== houseB) {
+      return houseA - houseB;
+    }
+
     const positionOrder: Record<string, number> = {
       'Head Boy': 1,
       'Head Girl': 2,
@@ -87,21 +101,7 @@ export const CampaignPosters: React.FC = () => {
     const posA = positionOrder[a.position] || 99;
     const posB = positionOrder[b.position] || 99;
     
-    if (posA !== posB) {
-      return posA - posB;
-    }
-    
-    const houseOrder: Record<string, number> = {
-      'Blue': 1,
-      'Red': 2,
-      'Green': 3,
-      'Yellow': 4
-    };
-    
-    const houseA = houseOrder[a.house] || 99;
-    const houseB = houseOrder[b.house] || 99;
-    
-    return houseA - houseB;
+    return posA - posB;
   });
 
   return (
