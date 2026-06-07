@@ -69,7 +69,7 @@ export const LiveResults: React.FC = () => {
         result[pos] = null;
         return;
       }
-      let maxVotes = -1;
+      let maxVotes = 0;
       let winner: typeof candidates[0] | null = null;
       posCands.forEach(c => {
         if (c.votesCount > maxVotes) {

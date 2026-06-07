@@ -164,7 +164,7 @@ export const Login: React.FC = () => {
       name: matchedStudent ? matchedStudent.name : studentNameInput.trim(), // Use exact DB name if matched
       className: selectedClass,
       house: selectedClass === 'Teacher' ? 'Teacher' : (houseInput as HouseColor),
-      id: matchedStudent?.id,
+      id: matchedStudent?.id || `manual_${Date.now()}`,
       isTeacher: selectedClass === 'Teacher'
     });
 

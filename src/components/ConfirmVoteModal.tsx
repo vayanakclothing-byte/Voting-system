@@ -7,7 +7,7 @@ import { GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../types';
 interface ConfirmVoteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void> | void;
   selections: { [position: string]: string };
 }
 
@@ -19,12 +19,12 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
 
   const positions = [...GLOBAL_POSITIONS, ...HOUSE_POSITIONS];
 
-  const handleFinalConfirm = () => {
+  const handleFinalConfirm = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      onConfirm();
-      setIsSubmitting(false);
-    }, 1200); // Simulate secure cryptographic submission delay
+    // Simulate secure cryptographic submission delay
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    await onConfirm();
+    // Modal will close, no need to set isSubmitting(false) unless error
   };
 
   return (

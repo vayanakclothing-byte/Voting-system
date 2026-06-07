@@ -311,6 +311,12 @@ class DatabaseService {
       });
       
       this.addLog('Vote Cast', `Student ${studentName} voted.`, 'success');
+      
+      // Invalidate cache for this class so next fetch gets updated hasVoted status
+      if (this.studentsCache[className]) {
+        delete this.studentsCache[className];
+      }
+      
       return { success: true, message: 'Your vote has been successfully submitted!' };
     } catch (e: any) {
       if (e.message === 'ALREADY_VOTED') {
