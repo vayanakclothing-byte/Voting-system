@@ -3,7 +3,8 @@ import { useApp } from '../context/AppContext';
 import { db } from '../services/db';
 import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { FaTrophy, FaChartBar, FaChartPie, FaUsers, FaTv, FaSyncAlt, FaArrowLeft, FaMedal, FaClock } from 'react-icons/fa';
+import { FaTrophy, FaChartBar, FaChartPie, FaUsers, FaTv, FaSyncAlt, FaArrowLeft, FaMedal, FaClock, FaQrcode, FaTimes } from 'react-icons/fa';
+import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Confetti from 'react-confetti';
 import { GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../types';
@@ -21,6 +22,7 @@ export const LiveResults: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'positions' | 'analytics' | 'houses' | 'timeline'>('positions');
   const [smartBoardMode, setSmartBoardMode] = useState<boolean>(false);
   const [celebrateWinners, setCelebrateWinners] = useState<boolean>(false);
+  const [showQR, setShowQR] = useState<boolean>(false);
 
   const positions = [...GLOBAL_POSITIONS, ...HOUSE_POSITIONS];
 
@@ -161,6 +163,15 @@ export const LiveResults: React.FC = () => {
           >
             <FaTrophy className="text-base" />
             <span>{celebrateWinners ? 'Stop Celebration' : 'Celebrate Winners'}</span>
+          </button>
+
+          {/* Share QR Code Toggle */}
+          <button
+            onClick={() => setShowQR(true)}
+            className="px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border bg-slate-800 hover:bg-slate-700 text-indigo-400 border-slate-700 hover:border-indigo-500/50"
+          >
+            <FaQrcode className="text-base" />
+            <span>Share QR Code</span>
           </button>
         </div>
 
@@ -459,6 +470,57 @@ export const LiveResults: React.FC = () => {
                 </ResponsiveContainer>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* QR Code Modal */}
+      <AnimatePresence>
+        {showQR && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-sm w-full shadow-2xl relative flex flex-col items-center text-center"
+            >
+              <button
+                onClick={() => setShowQR(false)}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors"
+              >
+                <FaTimes />
+              </button>
+              
+              <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-3xl mb-4 border border-indigo-500/30">
+                <FaQrcode />
+              </div>
+              
+              <h2 className="text-xl font-extrabold text-white mb-2">Live Results QR Code</h2>
+              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                Scan this QR code with any smartphone to instantly view these live election results. No login required!
+              </p>
+
+              <div className="bg-white p-4 rounded-2xl shadow-inner mb-6">
+                <QRCodeSVG
+                  value={window.location.origin + '/results'}
+                  size={200}
+                  level="H"
+                  includeMargin={false}
+                  className="rounded-lg"
+                />
+              </div>
+
+              <div className="w-full bg-slate-950 rounded-xl p-3 border border-slate-800 flex items-center justify-center overflow-hidden">
+                <span className="text-xs text-slate-500 truncate select-all font-mono">
+                  {window.location.origin}/results
+                </span>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
