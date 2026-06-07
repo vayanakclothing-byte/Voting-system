@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { db } from '../services/db';
 import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { FaTrophy, FaChartBar, FaChartPie, FaUsers, FaTv, FaSyncAlt, FaArrowLeft, FaMedal, FaClock, FaQrcode, FaTimes } from 'react-icons/fa';
+import { FaTrophy, FaChartBar, FaChartPie, FaUsers, FaTv, FaSyncAlt, FaArrowLeft, FaMedal, FaClock, FaQrcode, FaTimes, FaPrint } from 'react-icons/fa';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Confetti from 'react-confetti';
@@ -175,6 +175,16 @@ export const LiveResults: React.FC = () => {
             >
               <FaQrcode className="text-base" />
               <span>Share QR Code</span>
+            </button>
+
+            {/* Export PDF Report */}
+            <button
+              onClick={() => window.open('/print-report', '_blank')}
+              className="px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 border-indigo-400/30"
+              title="Open Official Printable Report"
+            >
+              <FaPrint className="text-base" />
+              <span>Export PDF Report</span>
             </button>
           </div>
         )}
