@@ -27,6 +27,7 @@ export const Login: React.FC = () => {
 
   const navigate = useNavigate();
 
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
   const [selectedClass, setSelectedClass] = useState<string>('');
   const [selectedSection, setSelectedSection] = useState<string>('');
   const [studentNameInput, setStudentNameInput] = useState<string>('');
@@ -46,7 +47,7 @@ export const Login: React.FC = () => {
       
       setIsLoadingStudents(true);
       try {
-        if (selectedClass === 'Teacher') {
+        if (role === 'teacher') {
            const teacherData = teachers.map(t => ({
             id: t.id,
             name: t.name,
@@ -66,7 +67,7 @@ export const Login: React.FC = () => {
       }
     };
     fetchStudents();
-  }, [selectedClass, teachers]);
+  }, [selectedClass, role, teachers]);
 
   // Issue 7: Clear stale sessions on mount if election is not active or has ended
   useEffect(() => {
@@ -140,32 +141,32 @@ export const Login: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedClass) {
+    if (role === 'student' && !selectedClass) {
       alert('Please select your Class.');
       return;
     }
     if (!studentNameInput.trim()) {
-      alert('Please enter or select your Student Name.');
+      alert(role === 'student' ? 'Please enter or select your Student Name.' : 'Please select your Teacher Name.');
       return;
     }
-    if (!houseInput && selectedClass !== 'Teacher') {
+    if (role === 'student' && !houseInput) {
       alert('Please select your House Color.');
       return;
     }
 
     const matchedStudent = classStudents.find(s => s.name.toLowerCase() === studentNameInput.trim().toLowerCase());
     if (!matchedStudent && !isManualMode) {
-        alert("The selected student is not valid for this class.");
+        alert(role === 'teacher' ? "The selected teacher is not valid." : "The selected student is not valid for this class.");
         return;
     }
 
-    // Verify student session login
+    // Verify session login
     const success = loginStudent({
-      name: matchedStudent ? matchedStudent.name : studentNameInput.trim(), // Use exact DB name if matched
-      className: selectedClass,
-      house: selectedClass === 'Teacher' ? 'Teacher' : (houseInput as HouseColor),
+      name: matchedStudent ? matchedStudent.name : studentNameInput.trim(),
+      className: role === 'teacher' ? 'Teacher' : selectedClass,
+      house: role === 'teacher' ? 'Teacher' : (houseInput as HouseColor),
       id: matchedStudent?.id || `manual_${Date.now()}`,
-      isTeacher: selectedClass === 'Teacher'
+      isTeacher: role === 'teacher'
     });
 
     if (success) {
@@ -221,7 +222,37 @@ export const Login: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 1. Select Class */}
+          {/* Role Toggle */}
+          <div className="flex bg-slate-950/80 rounded-2xl p-1 border border-slate-800">
+            <button
+              type="button"
+              onClick={() => {
+                setRole('student');
+                handleReset();
+              }}
+              className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+                role === 'student' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <FaUserGraduate /> Student
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRole('teacher');
+                handleReset();
+                setSelectedClass('Teacher');
+              }}
+              className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+                role === 'teacher' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <FaGraduationCap /> Teacher
+            </button>
+          </div>
+
+          {/* 1. Select Class (Only for Students) */}
+          {role === 'student' && (
           <div>
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
               1. Select Your Class
@@ -240,12 +271,12 @@ export const Login: React.FC = () => {
               {classes.map(c => (
                 <option key={c.id} value={c.name}>{c.name}</option>
               ))}
-              <option value="Teacher">Teacher</option>
             </select>
           </div>
+          )}
 
           {/* 1.5 Select Section */}
-          {selectedClass && availableSections.length > 0 && (
+          {role === 'student' && selectedClass && availableSections.length > 0 && (
             <div>
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
                 1.5 Select Your Section
@@ -266,11 +297,11 @@ export const Login: React.FC = () => {
             </div>
           )}
 
-          {/* 2. Student Name Input / Dropdown */}
+          {/* 2. Student / Teacher Name Input / Dropdown */}
           <div className="relative">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
-                2. Student Name
+                {role === 'student' ? '2. Student Name' : '1. Select Your Name'}
               </label>
 
               {/* Mode Toggle Button */}
@@ -288,18 +319,18 @@ export const Login: React.FC = () => {
 
             {isManualMode ? (
               <div className="relative">
-                <input
-                  type="text"
-                  value={studentNameInput}
-                  onChange={(e) => {
-                    setStudentNameInput(e.target.value);
-                    setShowSuggestions(true);
-                  }}
-                  onFocus={() => setShowSuggestions(true)}
-                  placeholder="Type your full student name..."
-                  className="w-full bg-slate-950/80 border border-slate-700/80 rounded-2xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
-                  required
-                />
+                  <input
+                    type="text"
+                    value={studentNameInput}
+                    onChange={(e) => {
+                      setStudentNameInput(e.target.value);
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    placeholder={role === 'student' ? "Type your full student name..." : "Type your full teacher name..."}
+                    className="w-full bg-slate-950/80 border border-slate-700/80 rounded-2xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
+                    required
+                  />
 
                 {/* Auto-suggestion Dropdown */}
                 <AnimatePresence>
@@ -313,7 +344,7 @@ export const Login: React.FC = () => {
                       {isLoadingStudents ? (
                         <div className="p-6 flex flex-col items-center justify-center gap-3">
                            <FaSpinner className="animate-spin text-indigo-400 text-2xl" />
-                           <span className="text-sm text-slate-400 font-medium">Fetching students...</span>
+                           <span className="text-sm text-slate-400 font-medium">Fetching {role}s...</span>
                         </div>
                       ) : suggestions.length > 0 ? (
                         suggestions.map(student => (
@@ -332,16 +363,16 @@ export const Login: React.FC = () => {
                           </li>
                         ))
                       ) : (
-                         <div className="px-4 py-3 text-slate-400 text-sm text-center">No matching students found in this class.</div>
+                         <div className="px-4 py-3 text-slate-400 text-sm text-center">No matching {role}s found.</div>
                       )}
                     </motion.ul>
                   )}
                 </AnimatePresence>
               </div>
-            ) : isLoadingStudents ? (
+             ) : isLoadingStudents ? (
                <div className="w-full bg-slate-950/80 border border-slate-700/80 rounded-2xl px-4 py-3.5 flex items-center justify-center gap-3">
                  <FaSpinner className="animate-spin text-indigo-400" />
-                 <span className="text-sm text-slate-400 font-medium">Loading student list...</span>
+                 <span className="text-sm text-slate-400 font-medium">Loading {role} list...</span>
                </div>
             ) : (
               <select
@@ -353,13 +384,13 @@ export const Login: React.FC = () => {
                 className="w-full bg-slate-950/80 border border-slate-700/80 rounded-2xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
                 required
               >
-                <option value="">-- Choose Student Name --</option>
+                <option value="">-- Choose {role === 'student' ? 'Student' : 'Teacher'} Name --</option>
                 {classStudents.map(s => (
                   <option key={s.id} value={s.name}>{s.name} {s.section ? `(Sec ${s.section})` : ''}</option>
                 ))}
               </select>
             )}
-            {!selectedClass && (
+            {!selectedClass && role === 'student' && (
               <p className="text-[10px] text-amber-400/90 mt-1.5 font-medium">
                 💡 Please select your class first to load the student list.
               </p>
@@ -367,7 +398,7 @@ export const Login: React.FC = () => {
           </div>
 
           {/* 3. Select House Color */}
-          {selectedClass !== 'Teacher' && (
+          {role === 'student' && (
           <div>
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">
               3. Select House Color (Dynamic Theme)
