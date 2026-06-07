@@ -15,6 +15,7 @@ import { ClassesPanel } from '../components/admin/ClassesPanel';
 import { TeachersPanel } from '../components/admin/TeachersPanel';
 import { BulkUploadPanel } from '../components/admin/BulkUploadPanel';
 import { LogsPanel } from '../components/admin/LogsPanel';
+import { VotesPanel } from '../components/admin/VotesPanel';
 
 export const AdminDashboard: React.FC = () => {
   const {
@@ -31,7 +32,7 @@ export const AdminDashboard: React.FC = () => {
   }, []);
 
   // Dashboard Tabs
-  const [activeTab, setActiveTab] = useState<'overview' | 'candidates' | 'students' | 'teachers' | 'classes' | 'bulk' | 'logs'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'candidates' | 'students' | 'teachers' | 'classes' | 'bulk' | 'logs' | 'votes'>('overview');
 
   // --- ELECTION CONTROLS ---
   const handleUpdateElectionStatus = (status: 'active' | 'paused' | 'completed') => {
@@ -89,6 +90,7 @@ export const AdminDashboard: React.FC = () => {
           { id: 'candidates', label: `Candidates (${candidates.length})`, icon: FaUsers },
           { id: 'students', label: `Students (${students.length})`, icon: FaUsers },
           { id: 'teachers', label: `Teachers (${teachers.length})`, icon: FaChalkboardTeacher },
+          { id: 'votes', label: `Voter Registry (${votes.length})`, icon: FaClipboardList },
           { id: 'classes', label: `Classes (${classes.length})`, icon: FaSchool },
           { id: 'bulk', label: 'Bulk Data Upload', icon: FaFileExcel },
           { id: 'logs', label: 'Activity Logs', icon: FaClipboardList }
@@ -124,6 +126,7 @@ export const AdminDashboard: React.FC = () => {
         {activeTab === 'students' && <StudentsPanel key="students" students={students} classes={classes} refreshData={refreshData} />}
         {activeTab === 'teachers' && <TeachersPanel key="teachers" teachers={teachers} refreshData={refreshData} />}
         {activeTab === 'classes' && <ClassesPanel key="classes" classes={classes} refreshData={refreshData} />}
+        {activeTab === 'votes' && <VotesPanel key="votes" votes={votes} />}
         {activeTab === 'bulk' && <BulkUploadPanel key="bulk" refreshData={refreshData} />}
         {activeTab === 'logs' && <LogsPanel key="logs" logs={logs} />}
       </AnimatePresence>
