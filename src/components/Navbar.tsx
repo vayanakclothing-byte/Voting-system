@@ -35,7 +35,13 @@ export const Navbar: React.FC = () => {
     <>
       <header className="w-full glass-panel border-b border-slate-800/80 sticky top-0 z-40 px-4 md:px-8 py-3 flex items-center justify-between transition-all duration-300">
         {/* Left: School Logo & Title */}
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+        <div 
+          className={`flex items-center gap-3 ${(!isAdminLoggedIn && !currentStudent && location.pathname === '/results') ? '' : 'cursor-pointer'}`} 
+          onClick={() => {
+            if (!isAdminLoggedIn && !currentStudent && location.pathname === '/results') return;
+            navigate('/');
+          }}
+        >
           <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center shrink-0">
             <img src="/logo.png" alt="Royal Academy Logo" className="w-full h-full object-contain filter drop-shadow-md" onError={(e) => { (e.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/shapes/svg?seed=RA'; }} />
           </div>
@@ -129,14 +135,6 @@ export const Navbar: React.FC = () => {
             >
               <FaSignOutAlt />
               <span className="hidden md:inline">Exit Session</span>
-            </button>
-          ) : location.pathname !== '/results' ? (
-            <button
-              onClick={() => navigate('/admin')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs md:text-sm border border-slate-700 transition-all"
-            >
-              <FaUserShield className="text-indigo-400" />
-              <span className="hidden md:inline">Admin</span>
             </button>
           ) : null}
         </div>
