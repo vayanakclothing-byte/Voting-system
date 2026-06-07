@@ -280,10 +280,8 @@ class DatabaseService {
         
         const votedPositionKeys = Object.keys(votedCandidates);
         
-        const missingPositions = expectedPositions.filter(pos => !votedPositionKeys.includes(pos));
-        if (missingPositions.length > 0 && !isManual) { 
-             throw new Error(`MISSING_POSITIONS:${missingPositions.join(',')}`);
-        }
+        // We no longer strictly enforce all positions at the DB level 
+        // because the UI allows proceeding with an incomplete ballot (e.g. if no candidates are registered)
         
         if (studentId.startsWith('manual_')) {
           isManual = true;
