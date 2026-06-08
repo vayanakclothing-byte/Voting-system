@@ -115,7 +115,28 @@ export const CandidatesPanel: React.FC<CandidatesPanelProps> = ({ candidates, re
               }
               const reader = new FileReader();
               reader.onloadend = () => {
-                setCandPhoto(reader.result as string);
+                const img = new Image();
+                img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  let width = img.width;
+                  let height = img.height;
+                  const maxDim = 600;
+                  if (width > height && width > maxDim) {
+                    height *= maxDim / width;
+                    width = maxDim;
+                  } else if (height > maxDim) {
+                    width *= maxDim / height;
+                    height = maxDim;
+                  }
+                  canvas.width = width;
+                  canvas.height = height;
+                  const ctx = canvas.getContext('2d');
+                  if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    setCandPhoto(canvas.toDataURL('image/jpeg', 0.8));
+                  }
+                };
+                img.src = reader.result as string;
               };
               reader.readAsDataURL(file);
             }} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white" />
