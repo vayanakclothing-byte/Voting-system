@@ -108,8 +108,8 @@ export const CandidatesPanel: React.FC<CandidatesPanelProps> = ({ candidates, re
             <input type="file" accept="image/*" onChange={e => {
               const file = e.target.files?.[0];
               if (!file) return;
-              if (file.size > 2 * 1024 * 1024) {
-                alert('Image size exceeds 2MB limit. Please choose a smaller file.');
+              if (file.size > 20 * 1024 * 1024) {
+                alert('Image size exceeds 20MB limit. Please choose a smaller file.');
                 e.target.value = '';
                 return;
               }
