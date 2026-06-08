@@ -103,43 +103,58 @@ export const CandidatesPanel: React.FC<CandidatesPanelProps> = ({ candidates, re
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Campaign Slogan</label>
             <input type="text" value={candSlogan} onChange={e => setCandSlogan(e.target.value)} placeholder="Short inspiring slogan" className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner" required />
           </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Candidate Photo</label>
-            <input type="file" accept="image/*" onChange={e => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              if (file.size > 20 * 1024 * 1024) {
-                alert('Image size exceeds 20MB limit. Please choose a smaller file.');
-                e.target.value = '';
-                return;
-              }
-              const reader = new FileReader();
-              reader.onloadend = () => {
-                const img = new Image();
-                img.onload = () => {
-                  const canvas = document.createElement('canvas');
-                  let width = img.width;
-                  let height = img.height;
-                  const maxDim = 600;
-                  if (width > height && width > maxDim) {
-                    height *= maxDim / width;
-                    width = maxDim;
-                  } else if (height > maxDim) {
-                    width *= maxDim / height;
-                    height = maxDim;
-                  }
-                  canvas.width = width;
-                  canvas.height = height;
-                  const ctx = canvas.getContext('2d');
-                  if (ctx) {
-                    ctx.drawImage(img, 0, 0, width, height);
-                    setCandPhoto(canvas.toDataURL('image/jpeg', 0.8));
-                  }
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Candidate Photo (URL or Upload)</label>
+              <input type="url" value={candPhoto.startsWith('data:') ? '' : candPhoto} onChange={e => setCandPhoto(e.target.value)} placeholder="Paste image URL here..." className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner mb-3" />
+              
+              <div className="relative flex items-center mb-3">
+                <div className="flex-grow border-t border-slate-800"></div>
+                <span className="flex-shrink-0 mx-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">OR UPLOAD</span>
+                <div className="flex-grow border-t border-slate-800"></div>
+              </div>
+
+              <input type="file" accept="image/*" onChange={e => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 20 * 1024 * 1024) {
+                  alert('Image size exceeds 20MB limit. Please choose a smaller file.');
+                  e.target.value = '';
+                  return;
+                }
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  const img = new Image();
+                  img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 600;
+                    if (width > height && width > maxDim) {
+                      height *= maxDim / width;
+                      width = maxDim;
+                    } else if (height > maxDim) {
+                      width *= maxDim / height;
+                      height = maxDim;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                      ctx.drawImage(img, 0, 0, width, height);
+                      setCandPhoto(canvas.toDataURL('image/jpeg', 0.8));
+                    }
+                  };
+                  img.src = reader.result as string;
                 };
-                img.src = reader.result as string;
-              };
-              reader.readAsDataURL(file);
-            }} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white" />
+                reader.readAsDataURL(file);
+              }} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-600/20 file:text-indigo-400 hover:file:bg-indigo-600/30 transition-all cursor-pointer" />
+            </div>
+            {candPhoto && (
+              <div className="mt-2 flex justify-start">
+                <img src={candPhoto} alt="Preview" className="w-12 h-12 rounded-xl object-cover border border-slate-700 shadow-sm" />
+              </div>
+            )}
           </div>
           <div className="md:col-span-3 flex justify-end gap-3 pt-2">
             <button type="submit" className="px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-indigo-600/30 transition-all border border-indigo-400/30 flex items-center gap-2">
