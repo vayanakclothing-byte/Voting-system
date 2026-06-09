@@ -356,7 +356,7 @@ export const Voting: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             <button
               type="button"
               id="voting-btn-clear"
@@ -366,7 +366,7 @@ export const Voting: React.FC = () => {
                  setCurrentStep(0);
                  localStorage.removeItem(`voting_progress_${currentStudent.id}`);
               }}
-              className="w-1/3 sm:w-auto px-6 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs md:text-sm transition-all border border-slate-700 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs md:text-sm transition-all border border-slate-700 flex items-center justify-center gap-2"
             >
               <FaUndoAlt />
               <span>Clear Ballot</span>
@@ -377,7 +377,7 @@ export const Voting: React.FC = () => {
               aria-label="Submit your ballot"
               onClick={handleOpenConfirm}
               disabled={!Object.keys(selections).some(pos => selections[pos])}
-              className="w-2/3 sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs md:text-sm shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 border border-emerald-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs md:text-sm shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 border border-emerald-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FaCheckCircle className="text-lg" />
               <span>Submit Ballot</span>

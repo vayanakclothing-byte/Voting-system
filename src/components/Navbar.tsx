@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaGraduationCap, FaExpand, FaCompress, FaVolumeUp, FaVolumeMute, FaUserShield, FaSignOutAlt, FaQrcode } from 'react-icons/fa';
+import { FaGraduationCap, FaExpand, FaCompress, FaVolumeUp, FaVolumeMute, FaUserShield, FaSignOutAlt, FaQrcode, FaBars, FaTimes } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 import { QRModal } from './QRModal';
 
 export const Navbar: React.FC = () => {
@@ -20,6 +21,7 @@ export const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (location.pathname === '/public-results' || location.pathname === '/print-report') return null;
 
@@ -79,68 +81,153 @@ export const Navbar: React.FC = () => {
         {/* Right: Quick Tools & Navigation Actions */}
         {(isAdminLoggedIn || currentStudent) && (
           <div className="flex items-center gap-2 md:gap-3">
-            {/* QR Code Voting Popup Button */}
-            <button
-              onClick={() => setIsQRModalOpen(true)}
-              className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all tooltip hidden sm:block"
-              title="Smart Board QR Voting"
-            >
-              <FaQrcode className="text-base md:text-lg text-indigo-400" />
-            </button>
+            {/* Desktop Quick Tools */}
+            <div className="hidden sm:flex items-center gap-2 md:gap-3">
+              {/* QR Code Voting Popup Button */}
+              <button
+                onClick={() => setIsQRModalOpen(true)}
+                className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all tooltip"
+                title="Smart Board QR Voting"
+              >
+                <FaQrcode className="text-base md:text-lg text-indigo-400" />
+              </button>
 
-            {/* Voice Announcement Toggle */}
-            <button
-              onClick={toggleVoiceAnnouncements}
-              className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all hidden sm:block"
-              title={voiceAnnouncements ? "Mute Voice Announcements" : "Enable Voice Announcements"}
-            >
-              {voiceAnnouncements ? <FaVolumeUp className="text-base md:text-lg text-emerald-400" /> : <FaVolumeMute className="text-base md:text-lg text-rose-400" />}
-            </button>
+              {/* Voice Announcement Toggle */}
+              <button
+                onClick={toggleVoiceAnnouncements}
+                className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all"
+                title={voiceAnnouncements ? "Mute Voice Announcements" : "Enable Voice Announcements"}
+              >
+                {voiceAnnouncements ? <FaVolumeUp className="text-base md:text-lg text-emerald-400" /> : <FaVolumeMute className="text-base md:text-lg text-rose-400" />}
+              </button>
 
-            {/* Fullscreen Toggle */}
-            <button
-              onClick={toggleFullscreen}
-              className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all hidden sm:block"
-              title="Fullscreen Election Mode"
-            >
-              {isFullscreen ? <FaCompress className="text-base md:text-lg text-blue-400" /> : <FaExpand className="text-base md:text-lg text-blue-400" />}
-            </button>
+              {/* Fullscreen Toggle */}
+              <button
+                onClick={toggleFullscreen}
+                className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 hover:text-white transition-all"
+                title="Fullscreen Election Mode"
+              >
+                {isFullscreen ? <FaCompress className="text-base md:text-lg text-blue-400" /> : <FaExpand className="text-base md:text-lg text-blue-400" />}
+              </button>
 
-            {/* Admin / Logout Actions */}
-            {isAdminLoggedIn ? (
-              <div className="flex items-center gap-2">
-                {location.pathname !== '/admin' && (
+              {/* Admin / Logout Actions */}
+              {isAdminLoggedIn ? (
+                <div className="flex items-center gap-2">
+                  {location.pathname !== '/admin' && (
+                    <button
+                      onClick={() => navigate('/admin')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs md:text-sm shadow-lg shadow-indigo-600/30 transition-all border border-indigo-400/30"
+                    >
+                      <FaUserShield />
+                      <span>Dashboard</span>
+                    </button>
+                  )}
                   <button
-                    onClick={() => navigate('/admin')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs md:text-sm shadow-lg shadow-indigo-600/30 transition-all border border-indigo-400/30"
+                    onClick={logoutAdmin}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-semibold text-xs md:text-sm border border-rose-500/30 transition-all"
+                    title="Admin Logout"
                   >
-                    <FaUserShield />
-                    <span className="hidden md:inline">Dashboard</span>
+                    <FaSignOutAlt />
                   </button>
-                )}
+                </div>
+              ) : (
                 <button
-                  onClick={logoutAdmin}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-semibold text-xs md:text-sm border border-rose-500/30 transition-all"
-                  title="Admin Logout"
+                  onClick={() => {
+                    logoutStudent();
+                    navigate('/');
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white font-semibold text-xs md:text-sm border border-rose-500/30 transition-all"
                 >
                   <FaSignOutAlt />
+                  <span>Exit Session</span>
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  logoutStudent();
-                  navigate('/');
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white font-semibold text-xs md:text-sm border border-rose-500/30 transition-all"
-              >
-                <FaSignOutAlt />
-                <span className="hidden md:inline">Exit Session</span>
-              </button>
-            )}
+              )}
+            </div>
+
+            {/* Mobile Menu Toggle Button */}
+            <button
+              className="sm:hidden p-2 rounded-xl bg-slate-800/60 border border-slate-700/50 text-white"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <FaTimes /> : <FaBars />}
+            </button>
           </div>
         )}
       </header>
+
+      {/* Mobile Menu Dropdown */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (isAdminLoggedIn || currentStudent) && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="sm:hidden fixed top-[64px] left-0 right-0 z-30 bg-slate-900 border-b border-slate-800 shadow-2xl p-4 flex flex-col gap-3"
+          >
+            <div className="flex items-center justify-around pb-3 border-b border-slate-800">
+              <button
+                onClick={() => { setIsQRModalOpen(true); setIsMobileMenuOpen(false); }}
+                className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition-all"
+              >
+                <div className="p-3 bg-slate-800 rounded-xl"><FaQrcode className="text-xl text-indigo-400" /></div>
+                <span className="text-[10px] font-bold mt-1">QR Vote</span>
+              </button>
+
+              <button
+                onClick={toggleVoiceAnnouncements}
+                className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition-all"
+              >
+                <div className="p-3 bg-slate-800 rounded-xl">
+                  {voiceAnnouncements ? <FaVolumeUp className="text-xl text-emerald-400" /> : <FaVolumeMute className="text-xl text-rose-400" />}
+                </div>
+                <span className="text-[10px] font-bold mt-1">Voice {voiceAnnouncements ? 'On' : 'Off'}</span>
+              </button>
+
+              <button
+                onClick={toggleFullscreen}
+                className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition-all"
+              >
+                <div className="p-3 bg-slate-800 rounded-xl">
+                  {isFullscreen ? <FaCompress className="text-xl text-blue-400" /> : <FaExpand className="text-xl text-blue-400" />}
+                </div>
+                <span className="text-[10px] font-bold mt-1">Fullscreen</span>
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-1">
+              {isAdminLoggedIn ? (
+                <>
+                  {location.pathname !== '/admin' && (
+                    <button
+                      onClick={() => { navigate('/admin'); setIsMobileMenuOpen(false); }}
+                      className="w-full py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm flex items-center justify-center gap-2"
+                    >
+                      <FaUserShield /> Dashboard
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { logoutAdmin(); setIsMobileMenuOpen(false); }}
+                    className="w-full py-3 rounded-xl bg-rose-500/20 text-rose-400 font-bold text-sm flex items-center justify-center gap-2 border border-rose-500/30"
+                  >
+                    <FaSignOutAlt /> Admin Logout
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    logoutStudent();
+                    navigate('/');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full py-3 rounded-xl bg-rose-500/20 text-rose-400 font-bold text-sm flex items-center justify-center gap-2 border border-rose-500/30"
+                >
+                  <FaSignOutAlt /> Exit Session
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* QR Modal Popup */}
       <QRModal isOpen={isQRModalOpen} onClose={() => setIsQRModalOpen(false)} />

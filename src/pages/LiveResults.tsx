@@ -149,11 +149,11 @@ export const LiveResults: React.FC = () => {
 
         {/* Action Controls - ONLY VISIBLE TO ADMIN */}
         {isAdminLoggedIn && (
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
             {/* Smart Board Toggle */}
             <button
               onClick={() => setSmartBoardMode(!smartBoardMode)}
-              className={`px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border ${smartBoardMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 border-indigo-400/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'}`}
+              className={`w-full md:w-auto px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-all border ${smartBoardMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 border-indigo-400/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'}`}
             >
               <FaTv className="text-base" />
               <span>{smartBoardMode ? 'Exit Smart Board Mode' : 'Smart Board Mode'}</span>
@@ -162,7 +162,7 @@ export const LiveResults: React.FC = () => {
             {/* Celebrate Winners Toggle */}
             <button
               onClick={() => setCelebrateWinners(!celebrateWinners)}
-              className={`px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border ${celebrateWinners ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/30 border-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border-slate-700'}`}
+              className={`w-full md:w-auto px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-all border ${celebrateWinners ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/30 border-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border-slate-700'}`}
             >
               <FaTrophy className="text-base" />
               <span>{celebrateWinners ? 'Stop Celebration' : 'Celebrate Winners'}</span>
@@ -171,7 +171,7 @@ export const LiveResults: React.FC = () => {
             {/* Share QR Code Toggle */}
             <button
               onClick={() => setShowQR(true)}
-              className="px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border bg-slate-800 hover:bg-slate-700 text-indigo-400 border-slate-700 hover:border-indigo-500/50"
+              className="w-full md:w-auto px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-all border bg-slate-800 hover:bg-slate-700 text-indigo-400 border-slate-700 hover:border-indigo-500/50"
             >
               <FaQrcode className="text-base" />
               <span>Share QR Code</span>
@@ -180,7 +180,7 @@ export const LiveResults: React.FC = () => {
             {/* Export PDF Report */}
             <button
               onClick={() => window.open('/print-report', '_blank')}
-              className="px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all border bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 border-indigo-400/30"
+              className="w-full md:w-auto px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-all border bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 border-indigo-400/30"
               title="Open Official Printable Report"
             >
               <FaPrint className="text-base" />
@@ -245,7 +245,7 @@ export const LiveResults: React.FC = () => {
       </div>
 
       {/* View Navigation Tabs */}
-      <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 w-full md:w-auto overflow-x-auto mb-8 shadow-inner">
+      <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 w-full md:w-auto overflow-x-auto mb-8 shadow-inner" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         <button
           onClick={() => setActiveTab('positions')}
           className={`flex-1 md:flex-none px-6 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 ${activeTab === 'positions' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}

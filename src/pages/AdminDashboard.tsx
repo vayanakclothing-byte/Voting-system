@@ -70,12 +70,12 @@ export const AdminDashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <button onClick={() => navigate('/results')} className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs md:text-sm transition-all border border-slate-700 flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+          <button onClick={() => navigate('/results')} className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs md:text-sm transition-all border border-slate-700 flex items-center justify-center gap-2">
             <FaChartBar />
             <span>Live Results</span>
           </button>
-          <button onClick={logoutAdmin} className="px-5 py-3 rounded-2xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white font-bold text-xs md:text-sm border border-rose-500/30 transition-all flex items-center gap-2">
+          <button onClick={logoutAdmin} className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white font-bold text-xs md:text-sm border border-rose-500/30 transition-all flex items-center justify-center gap-2">
             <span>Logout Admin</span>
           </button>
         </div>
@@ -84,7 +84,7 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 w-full overflow-x-auto mb-8 shadow-inner">
+      <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 w-full overflow-x-auto mb-8 shadow-inner" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {[
           { id: 'overview', label: 'Overview & Controls', icon: FaUserShield },
           { id: 'candidates', label: `Candidates (${candidates.length})`, icon: FaUsers },
