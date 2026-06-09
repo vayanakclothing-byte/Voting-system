@@ -143,6 +143,7 @@ export const CampaignPosters: React.FC = () => {
               <img
                 src={candidate.photoUrl}
                 alt={candidate.name}
+                loading="lazy"
                 className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />

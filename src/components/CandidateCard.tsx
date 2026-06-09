@@ -69,6 +69,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, isSelec
           <img
             src={candidate.photoUrl}
             alt={candidate.name}
+            loading="lazy"
             className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
             onError={(e) => {
               (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/bottts/svg?seed=${candidate.name}`;

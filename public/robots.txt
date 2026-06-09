@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /public-results
+Allow: /admin-login
+Disallow: /admin
+Disallow: /voting
+Disallow: /confirmation
+Disallow: /print-report
+
+Sitemap: https://royal-election-system.vercel.app/sitemap.xml
