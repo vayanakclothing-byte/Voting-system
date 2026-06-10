@@ -31,11 +31,32 @@ export const LiveResults: React.FC = () => {
   const votedStudents = students.filter(s => s.hasVoted).length;
   const participationRate = totalStudents > 0 ? Math.round((votedStudents / totalStudents) * 100) : 0;
 
+  // Compute actual votes from the votes array as source of truth
+  const computedCandidates = useMemo(() => {
+    const counts: Record<string, number> = {};
+    candidates.forEach(c => { counts[c.id] = 0; });
+    votes.forEach(v => {
+      if (v.votedCandidates) {
+        Object.values(v.votedCandidates).forEach(candId => {
+          if (counts[candId] !== undefined) {
+            counts[candId]++;
+          } else {
+            counts[candId] = 1;
+          }
+        });
+      }
+    });
+    return candidates.map(c => ({
+      ...c,
+      votesCount: counts[c.id] || 0
+    }));
+  }, [candidates, votes]);
+
   // Calculate House-wise statistics
   const houseStats = useMemo(() => {
     const houses = ['Blue', 'Red', 'Green', 'Yellow'];
     return houses.map(h => {
-      const houseCands = candidates.filter(c => c.house === h);
+      const houseCands = computedCandidates.filter(c => c.house === h);
       const totalHouseVotes = houseCands.reduce((sum, c) => sum + c.votesCount, 0);
       return {
         house: h,
@@ -43,7 +64,7 @@ export const LiveResults: React.FC = () => {
         color: h === 'Blue' ? '#3b82f6' : h === 'Red' ? '#ef4444' : h === 'Green' ? '#10b981' : '#f59e0b'
       };
     });
-  }, [candidates]);
+  }, [computedCandidates]);
 
   // Calculate Voter Turnout Timeline
   const timelineData = useMemo(() => {
@@ -64,10 +85,10 @@ export const LiveResults: React.FC = () => {
 
   // Determine races and winners for each specific contest
   const races = useMemo(() => {
-    const result: { title: string, position: string, houseFilter: string, cands: typeof candidates, totalVotes: number, winner: typeof candidates[0] | null }[] = [];
+    const result: { title: string, position: string, houseFilter: string, cands: typeof computedCandidates, totalVotes: number, winner: typeof computedCandidates[0] | null }[] = [];
     
     GLOBAL_POSITIONS.forEach(pos => {
-      const cands = candidates.filter(c => c.position === pos);
+      const cands = computedCandidates.filter(c => c.position === pos);
       if (cands.length === 0) return;
       let max = 0;
       let w = null;
@@ -84,7 +105,7 @@ export const LiveResults: React.FC = () => {
 
     HOUSE_POSITIONS.forEach(pos => {
       ['Blue', 'Red', 'Green', 'Yellow'].forEach(house => {
-        const cands = candidates.filter(c => c.position === pos && c.house === house);
+        const cands = computedCandidates.filter(c => c.position === pos && c.house === house);
         if (cands.length > 0) {
           let max = 0;
           let w = null;
@@ -102,7 +123,7 @@ export const LiveResults: React.FC = () => {
     });
 
     return result;
-  }, [candidates]);
+  }, [computedCandidates]);
 
   return (
     <main className={`min-h-screen pb-20 pt-8 px-4 md:px-8 max-w-7xl mx-auto relative z-10 transition-all duration-500 ${smartBoardMode ? 'max-w-full px-8 py-12 bg-slate-950' : ''}`}>
