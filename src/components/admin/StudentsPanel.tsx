@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { FaPlus, FaSave, FaEdit, FaTrash, FaSearch, FaDownload, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import { db } from '../../services/db';
+import { useApp } from '../../context/AppContext';
 import { Student, HouseColor, SchoolClass } from '../../types';
 
 interface StudentsPanelProps {
@@ -12,6 +13,9 @@ interface StudentsPanelProps {
 }
 
 export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes, refreshData }) => {
+  const { electionState } = useApp();
+  const isLocked = electionState.status === 'completed' || electionState.status === 'paused';
+
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
   const [studName, setStudName] = useState('');
   const [studClass, setStudClass] = useState('');
@@ -86,6 +90,11 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="space-y-8">
       {/* Add / Edit Form */}
+      {isLocked ? (
+        <div className="glass-panel bg-rose-500/10 border border-rose-500/20 rounded-3xl p-6 md:p-8 shadow-xl flex items-center justify-center text-center">
+          <p className="text-rose-400 font-bold">Data entry and modifications are locked while the election is {electionState.status}.</p>
+        </div>
+      ) : (
       <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-extrabold text-white">{editingStudentId ? 'Edit Student Details' : 'Register New Student'}</h2>
@@ -114,6 +123,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
           </div>
         </form>
       </div>
+      )}
 
       {/* Search and Filters Bar */}
       <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
@@ -143,7 +153,7 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <h2 className="text-xl font-extrabold text-white">Registered Students ({filteredStudents.length !== students.length ? `${filteredStudents.length} of ${students.length}` : students.length})</h2>
           <div className="flex items-center gap-3">
-            <button onClick={handleDeleteAllStudents} className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 font-bold text-xs flex items-center gap-2 border border-rose-500/30 transition-colors">
+            <button onClick={handleDeleteAllStudents} disabled={isLocked} className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 font-bold text-xs flex items-center gap-2 border border-rose-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
               <FaTrash /><span>Delete All</span>
             </button>
             <button onClick={() => {
@@ -169,8 +179,8 @@ export const StudentsPanel: React.FC<StudentsPanelProps> = ({ students, classes,
                   <td className="py-4 text-slate-400 font-mono">{stud.rollNumber || 'N/A'}</td>
                   <td className="py-4">{stud.hasVoted ? <span className="text-xs px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">Voted</span> : <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 font-bold">Pending</span>}</td>
                   <td className="py-4 pr-4 text-right space-x-2">
-                    <button onClick={() => handleOpenEditStudent(stud)} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-white border border-slate-700 transition-colors"><FaEdit /></button>
-                    <button onClick={() => handleDeleteStudent(stud.id)} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 hover:text-white border border-slate-700 transition-colors"><FaTrash /></button>
+                    <button onClick={() => handleOpenEditStudent(stud)} disabled={isLocked} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-white border border-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><FaEdit /></button>
+                    <button onClick={() => handleDeleteStudent(stud.id)} disabled={isLocked} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 hover:text-white border border-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><FaTrash /></button>
                   </td>
                 </tr>
               ))

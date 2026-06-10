@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { db } from '../../services/db';
 import { BulkStudentSchema, BulkTeacherSchema, BulkCandidateSchema } from '../../utils/validators';
 import toast from 'react-hot-toast';
+import { useApp } from '../../context/AppContext';
 import { GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../../types';
 
 interface BulkUploadPanelProps {
@@ -12,6 +13,9 @@ interface BulkUploadPanelProps {
 }
 
 export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData }) => {
+  const { electionState } = useApp();
+  const isLocked = electionState.status === 'completed' || electionState.status === 'paused';
+
   const [bulkType, setBulkType] = useState<'students' | 'teachers' | 'candidates'>('students');
   const [parsedRows, setParsedRows] = useState<any[]>([]);
   const [uploadReport, setUploadReport] = useState<{ imported: number; skipped: number } | null>(null);
@@ -120,6 +124,11 @@ export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData })
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="space-y-8">
+      {isLocked ? (
+        <div className="glass-panel bg-rose-500/10 border border-rose-500/20 rounded-3xl p-6 md:p-8 shadow-xl flex items-center justify-center text-center">
+          <p className="text-rose-400 font-bold">Bulk uploading is locked while the election is {electionState.status}.</p>
+        </div>
+      ) : (
       <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
         <h2 className="text-xl font-extrabold text-white mb-2">Excel & CSV Bulk Data Import</h2>
         <p className="text-xs text-slate-400 mb-6">Upload student rosters, teacher lists, or candidate manifests in bulk. Download the sample template to ensure correct column headers.</p>
@@ -190,6 +199,7 @@ export const BulkUploadPanel: React.FC<BulkUploadPanelProps> = ({ refreshData })
           </div>
         )}
       </div>
+      )}
     </motion.div>
   );
 };
