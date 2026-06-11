@@ -182,7 +182,7 @@ class DatabaseService {
          const allStudents = allSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Student[];
          const normalize = (c: string) => (c || '').toString().replace(/[\s\-_]+/g, '').replace(/class|grade|year|level/gi, '').toLowerCase();
          const normClass = normalize(className);
-         fetchedStudents = allStudents.filter(s => {
+         const filtered = allStudents.filter(s => {
            const normSClass = normalize(s.className);
            // Exact normalized match
            if (normSClass === normClass) return true;
@@ -190,10 +190,12 @@ class DatabaseService {
            if (normSClass.length > 1 && normClass.length > 1) {
              if (normSClass.includes(normClass) || normClass.includes(normSClass)) return true;
            }
-           // Split by spaces/comma and check intersection if they had original separators (but we removed spaces).
-           // Let's just rely on the includes above or just return true if it's super close.
            return false;
          });
+         
+         // If we still found no students matching the class, fall back to returning ALL students.
+         // This ensures that the user is not completely blocked from logging in if the class names are completely disjoint.
+         fetchedStudents = filtered.length > 0 ? filtered : allStudents;
       }
 
       // Store in cache
