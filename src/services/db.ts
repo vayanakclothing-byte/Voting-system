@@ -180,11 +180,20 @@ class DatabaseService {
       if (fetchedStudents.length === 0) {
          const allSnapshot = await getDocs(collection(firestore, 'students'));
          const allStudents = allSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Student[];
-         const normalize = (c: string) => c.replace(/[\s\-_]+/g, '').replace(/class/gi, '').toLowerCase();
+         const normalize = (c: string) => (c || '').toString().replace(/[\s\-_]+/g, '').replace(/class|grade|year|level/gi, '').toLowerCase();
          const normClass = normalize(className);
-         fetchedStudents = allStudents.filter(s => 
-           normalize(s.className || '') === normClass
-         );
+         fetchedStudents = allStudents.filter(s => {
+           const normSClass = normalize(s.className);
+           // Exact normalized match
+           if (normSClass === normClass) return true;
+           // If one contains the other and length is decent enough to avoid false positives (e.g. matching '1' with '10')
+           if (normSClass.length > 1 && normClass.length > 1) {
+             if (normSClass.includes(normClass) || normClass.includes(normSClass)) return true;
+           }
+           // Split by spaces/comma and check intersection if they had original separators (but we removed spaces).
+           // Let's just rely on the includes above or just return true if it's super close.
+           return false;
+         });
       }
 
       // Store in cache
@@ -254,6 +263,10 @@ class DatabaseService {
     if (!firestore) return;
     const newDoc = doc(collection(firestore, 'classes'));
     await setDoc(newDoc, { ...schoolClass, id: newDoc.id });
+  }
+  public async updateClass(id: string, updates: Partial<SchoolClass>) {
+    if (!firestore) return;
+    await updateDoc(doc(firestore, 'classes', id), updates);
   }
   public async deleteClass(id: string) { if (firestore) await deleteDoc(doc(firestore, 'classes', id)); }
 

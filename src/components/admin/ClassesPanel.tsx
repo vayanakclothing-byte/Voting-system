@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaSave, FaTrash } from 'react-icons/fa';
+import { FaSave, FaTrash, FaEdit } from 'react-icons/fa';
 import { db } from '../../services/db';
 import { useApp } from '../../context/AppContext';
 import { SchoolClass } from '../../types';
@@ -14,13 +14,32 @@ export const ClassesPanel: React.FC<ClassesPanelProps> = ({ classes, refreshData
   const { electionState } = useApp();
   const isLocked = electionState.status === 'completed' || electionState.status === 'paused';
 
+  const [editingClassId, setEditingClassId] = useState<string | null>(null);
   const [classNameInput, setClassNameInput] = useState('');
   const [classSecInput, setClassSecInput] = useState('A, B, C');
 
-  const handleAddClass = (e: React.FormEvent) => {
+  const handleSaveClass = (e: React.FormEvent) => {
     e.preventDefault();
-    db.addClass({ name: classNameInput, sections: classSecInput.split(',').map(s => s.trim()) });
-    refreshData(); setClassNameInput('');
+    if (editingClassId) {
+      db.updateClass(editingClassId, { name: classNameInput, sections: classSecInput.split(',').map(s => s.trim()) });
+      setEditingClassId(null);
+    } else {
+      db.addClass({ name: classNameInput, sections: classSecInput.split(',').map(s => s.trim()) });
+    }
+    refreshData(); setClassNameInput(''); setClassSecInput('A, B, C');
+  };
+
+  const handleEditClass = (cls: SchoolClass) => {
+    setEditingClassId(cls.id);
+    setClassNameInput(cls.name);
+    setClassSecInput(cls.sections.join(', '));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingClassId(null);
+    setClassNameInput('');
+    setClassSecInput('A, B, C');
   };
 
   const handleDeleteClass = (id: string) => {
@@ -35,11 +54,14 @@ export const ClassesPanel: React.FC<ClassesPanelProps> = ({ classes, refreshData
         </div>
       ) : (
       <div className="glass-panel bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
-        <h2 className="text-xl font-extrabold text-white mb-6">Register New School Class</h2>
-        <form onSubmit={handleAddClass} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-extrabold text-white">{editingClassId ? 'Edit School Class' : 'Register New School Class'}</h2>
+          {editingClassId && <button onClick={handleCancelEdit} className="text-xs text-indigo-400 hover:text-indigo-300 font-bold">Switch to Add New</button>}
+        </div>
+        <form onSubmit={handleSaveClass} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Class Name</label><input type="text" value={classNameInput} onChange={e => setClassNameInput(e.target.value)} placeholder="e.g. Class 10" className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner" required /></div>
           <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Sections (Comma Separated)</label><input type="text" value={classSecInput} onChange={e => setClassSecInput(e.target.value)} placeholder="A, B, C" className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 shadow-inner" required /></div>
-          <div className="md:col-span-2 flex justify-end pt-2"><button type="submit" className="px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-indigo-600/30 transition-all border border-indigo-400/30 flex items-center gap-2"><FaSave /><span>Save Class</span></button></div>
+          <div className="md:col-span-2 flex justify-end pt-2"><button type="submit" className="px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-indigo-600/30 transition-all border border-indigo-400/30 flex items-center gap-2"><FaSave /><span>{editingClassId ? 'Update Class' : 'Save Class'}</span></button></div>
         </form>
       </div>
       )}
@@ -52,7 +74,10 @@ export const ClassesPanel: React.FC<ClassesPanelProps> = ({ classes, refreshData
             {classes.map(cls => (
               <tr key={cls.id} className="hover:bg-slate-800/30 transition-colors">
                 <td className="py-4 pl-4 font-bold text-white">{cls.name}</td><td className="py-4 text-slate-300">{cls.sections.join(', ')}</td>
-                <td className="py-4 pr-4 text-right"><button onClick={() => handleDeleteClass(cls.id)} disabled={isLocked} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 hover:text-white border border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"><FaTrash /></button></td>
+                <td className="py-4 pr-4 text-right space-x-2">
+                  <button onClick={() => handleEditClass(cls)} disabled={isLocked} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-white border border-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><FaEdit /></button>
+                  <button onClick={() => handleDeleteClass(cls.id)} disabled={isLocked} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 hover:text-white border border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"><FaTrash /></button>
+                </td>
               </tr>
             ))}
           </tbody>
