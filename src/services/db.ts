@@ -1,13 +1,21 @@
 import { Student, Teacher, Candidate, Vote, ElectionState, ActivityLog, HouseColor, SchoolClass, GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../types';
 import { firestore } from './firebase';
-import { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, writeBatch, runTransaction, query, orderBy, limit, where, increment } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, writeBatch, runTransaction, query, orderBy, limit, where, increment, serverTimestamp } from 'firebase/firestore';
 
-const ELECTION_DURATION_MS = 8 * 60 * 60 * 1000;
+const ELECTION_DURATION_MS = 365 * 24 * 60 * 60 * 1000;
 
 const createElectionWindow = () => ({
   startTime: new Date().toISOString(),
   endTime: new Date(Date.now() + ELECTION_DURATION_MS).toISOString()
 });
+
+const normalizeLogTimestamp = (data: any) => {
+  if (data.timestamp && typeof data.timestamp !== 'string' && typeof data.timestamp.toDate === 'function') {
+    return { ...data, timestamp: data.timestamp.toDate().toISOString() };
+  }
+
+  return data;
+};
 
 const DEFAULT_ELECTION_STATE: ElectionState = {
   status: 'active',
@@ -47,7 +55,10 @@ class DatabaseService {
         q = query(collection(firestore, col), orderBy('timestamp', 'desc'), limit(100)) as any;
       }
       const unsub = onSnapshot(q, (snapshot) => {
-        (this.state as any)[col] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        (this.state as any)[col] = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return { id: doc.id, ...(col === 'logs' ? normalizeLogTimestamp(data) : data) };
+        });
         this.notifyListeners();
       });
       this.unsubscribes.push(unsub);
@@ -313,7 +324,7 @@ class DatabaseService {
   public async addLog(action: string, details: string, type: 'info' | 'success' | 'warning' | 'danger') {
     if (!firestore) return;
     const newDoc = doc(collection(firestore, 'logs'));
-    await setDoc(newDoc, { id: newDoc.id, action, details, timestamp: new Date().toISOString(), type });
+    await setDoc(newDoc, { id: newDoc.id, action, details, timestamp: serverTimestamp(), type });
   }
 
   // --- BULK UPLOAD ---
