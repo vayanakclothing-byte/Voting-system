@@ -64,42 +64,42 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, isSelec
       )}
 
       {/* Top Section: Photo & Symbol */}
-      <div className="relative mb-4 group">
-        <div className="w-full h-48 md:h-56 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700/50 relative shadow-inner">
+      <div className="relative mb-4 md:mb-5 group">
+        <div className="w-full aspect-[4/3] sm:h-56 sm:aspect-auto rounded-2xl overflow-hidden bg-slate-800 border border-slate-700/50 relative shadow-inner">
           <img
             src={candidate.photoUrl}
             alt={candidate.name}
             loading="lazy"
-            className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
             onError={(e) => {
               (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/bottts/svg?seed=${candidate.name}`;
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
         </div>
 
         {/* Election Symbol Floating Badge */}
-        <div className="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-700 shadow-xl flex items-center gap-2 group-hover:scale-105 transition-transform">
-          <span className="text-2xl filter drop-shadow">{candidate.symbol}</span>
-          <span className="text-xs font-bold text-slate-200 tracking-wider uppercase">Symbol</span>
+        <div className="absolute bottom-4 left-4 bg-slate-900/95 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-700 shadow-2xl flex items-center gap-3 group-hover:scale-105 transition-transform">
+          <span className="text-3xl md:text-2xl filter drop-shadow-md">{candidate.symbol}</span>
+          <span className="text-xs md:text-[10px] font-extrabold text-slate-200 tracking-wider uppercase">Symbol</span>
         </div>
       </div>
 
       {/* Middle Section: Details */}
-      <div className="flex-1 flex flex-col justify-between mb-4">
+      <div className="flex-1 flex flex-col justify-between mb-5 md:mb-4">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-lg border tracking-wider ${styles.badge}`}>
+          <div className="flex items-center gap-2 mb-2 md:mb-1.5 flex-wrap">
+            <span className={`text-xs md:text-[10px] font-extrabold uppercase px-3 py-1 md:px-2.5 md:py-0.5 rounded-lg border tracking-wider ${styles.badge}`}>
               {candidate.house} House
             </span>
-            <span className="text-xs text-slate-400 font-semibold">• {candidate.position}</span>
+            <span className="text-sm md:text-xs text-slate-300 md:text-slate-400 font-bold md:font-semibold">• {candidate.position}</span>
           </div>
 
-          <h3 className="text-xl font-extrabold text-white tracking-tight mb-2 group-hover:text-indigo-300 transition-colors">
+          <h3 className="text-2xl md:text-xl font-extrabold text-white tracking-tight mb-3 md:mb-2 group-hover:text-indigo-300 transition-colors drop-shadow-md">
             {candidate.name}
           </h3>
 
-          <p className="text-xs text-slate-300/90 italic line-clamp-2 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/80 border-l-4 border-l-indigo-500">
+          <p className="text-sm md:text-xs text-slate-200 md:text-slate-300/90 italic line-clamp-3 md:line-clamp-2 bg-slate-950/60 p-3 md:p-2.5 rounded-xl border border-slate-800/80 border-l-4 border-l-indigo-500 shadow-sm">
             "{candidate.slogan}"
           </p>
         </div>
@@ -108,9 +108,9 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, isSelec
       {/* Bottom Section: Vote Action Button */}
       <button
         type="button"
-        className={`w-full py-3 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300 ${styles.button}`}
+        className={`w-full py-4 px-6 md:py-3 md:px-4 rounded-2xl font-bold text-base md:text-sm flex items-center justify-center gap-3 md:gap-2 transition-all duration-300 active:scale-95 ${styles.button}`}
       >
-        <FaVoteYea className="text-base" />
+        <FaVoteYea className="text-xl md:text-base" />
         {isSelected ? 'Selected for Vote' : `Vote for ${candidate.name}`}
       </button>
 
