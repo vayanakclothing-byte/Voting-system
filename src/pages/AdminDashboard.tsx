@@ -35,15 +35,15 @@ export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'candidates' | 'students' | 'teachers' | 'classes' | 'bulk' | 'logs' | 'votes'>('overview');
 
   // --- ELECTION CONTROLS ---
-  const handleUpdateElectionStatus = (status: 'active' | 'paused' | 'completed') => {
-    db.updateElectionState({ status });
+  const handleUpdateElectionStatus = async (status: 'active' | 'paused' | 'completed') => {
+    await db.updateElectionState({ status });
     refreshData();
   };
 
-  const handleResetElection = () => {
+  const handleResetElection = async () => {
     const confirm = window.confirm('WARNING: Are you absolutely sure you want to reset the election? This will clear all vote counts and student voting records!');
     if (confirm) {
-      db.resetElectionData();
+      await db.resetElectionData();
       refreshData();
       alert('Election has been reset successfully.');
     }

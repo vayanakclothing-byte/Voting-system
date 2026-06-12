@@ -136,17 +136,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [currentStudent]);
 
   const loginStudent = (session: StudentSession): boolean => {
-    // Check both status and endTime for consistency
     if (electionState.status !== 'active') {
       toast.error('Election is currently not active!');
       return false;
-    }
-    if (electionState.endTime) {
-      const end = new Date(electionState.endTime).getTime();
-      if (!isNaN(end) && Date.now() >= end) {
-        toast.error('The election period has ended.');
-        return false;
-      }
     }
 
     // Verify if student/teacher already voted

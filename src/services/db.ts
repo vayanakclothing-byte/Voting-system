@@ -1,12 +1,26 @@
 import { Student, Teacher, Candidate, Vote, ElectionState, ActivityLog, HouseColor, SchoolClass, GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../types';
 import { firestore } from './firebase';
-import { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, writeBatch, runTransaction, query, orderBy, limit, where, increment } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, writeBatch, runTransaction, query, orderBy, limit, where, increment, serverTimestamp } from 'firebase/firestore';
+
+const ELECTION_DURATION_MS = 365 * 24 * 60 * 60 * 1000;
+
+const createElectionWindow = () => ({
+  startTime: new Date().toISOString(),
+  endTime: new Date(Date.now() + ELECTION_DURATION_MS).toISOString()
+});
+
+const normalizeLogTimestamp = (data: any) => {
+  if (data.timestamp && typeof data.timestamp !== 'string' && typeof data.timestamp.toDate === 'function') {
+    return { ...data, timestamp: data.timestamp.toDate().toISOString() };
+  }
+
+  return data;
+};
 
 const DEFAULT_ELECTION_STATE: ElectionState = {
   status: 'active',
   allowManualTyping: true,
-  startTime: new Date().toISOString(),
-  endTime: new Date(Date.now() + 28800000).toISOString(),
+  ...createElectionWindow(),
   announcement: 'Welcome to the Royal Academy Student Council Election 2083!',
   voiceAnnouncements: true
 };
@@ -14,7 +28,6 @@ const DEFAULT_ELECTION_STATE: ElectionState = {
 class DatabaseService {
   private listeners: (() => void)[] = [];
   private unsubscribes: (() => void)[] = [];
-  private electionEndInterval: ReturnType<typeof setInterval> | null = null;
 
   private state = {
     students: [] as Student[],
@@ -42,7 +55,10 @@ class DatabaseService {
         q = query(collection(firestore, col), orderBy('timestamp', 'desc'), limit(100)) as any;
       }
       const unsub = onSnapshot(q, (snapshot) => {
-        (this.state as any)[col] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        (this.state as any)[col] = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return { id: doc.id, ...(col === 'logs' ? normalizeLogTimestamp(data) : data) };
+        });
         this.notifyListeners();
       });
       this.unsubscribes.push(unsub);
@@ -55,40 +71,9 @@ class DatabaseService {
         setDoc(doc(firestore, 'system', 'electionState'), DEFAULT_ELECTION_STATE);
         this.state.electionState = DEFAULT_ELECTION_STATE;
       }
-      // Auto-end election when endTime has passed
-      this.checkAndAutoEndElection();
       this.notifyListeners();
     });
     this.unsubscribes.push(electionUnsub);
-
-    // Periodic check every 30s to catch election end even without Firestore events
-    this.startElectionEndTimer();
-  }
-
-  private checkAndAutoEndElection() {
-    const { status, endTime } = this.state.electionState;
-    if (status === 'active' && endTime) {
-      const end = new Date(endTime).getTime();
-      if (!isNaN(end) && Date.now() >= end) {
-        this.state.electionState.status = 'completed';
-        // Persist the change to Firestore
-        if (firestore) {
-          updateDoc(doc(firestore, 'system', 'electionState'), { status: 'completed' }).catch(() => {});
-        }
-        this.addLog('Election Auto-Ended', 'Election automatically ended because the scheduled end time was reached.', 'warning');
-      }
-    }
-  }
-
-  private startElectionEndTimer() {
-    if (this.electionEndInterval) clearInterval(this.electionEndInterval);
-    this.electionEndInterval = setInterval(() => {
-      const prevStatus = this.state.electionState.status;
-      this.checkAndAutoEndElection();
-      if (prevStatus !== this.state.electionState.status) {
-        this.notifyListeners();
-      }
-    }, 30000); // Check every 30 seconds
   }
 
   public subscribe(listener: () => void) {
@@ -107,21 +92,18 @@ class DatabaseService {
   public async updateElectionState(newState: Partial<ElectionState>) {
     if (!firestore) return;
     
-    // If setting status to active, ensure endTime is in the future
+    const nextState = { ...newState };
+
+    // Starting an election should always create a fresh voting window. Otherwise a
+    // previously expired endTime can make another open tab auto-complete it again.
     if (newState.status === 'active') {
-      const currentEndTime = newState.endTime || this.state.electionState.endTime;
-      if (currentEndTime) {
-        const end = new Date(currentEndTime).getTime();
-        if (isNaN(end) || Date.now() >= end) {
-          newState.endTime = new Date(Date.now() + 28800000).toISOString(); // 8 hours default
-        }
-      } else {
-        newState.endTime = new Date(Date.now() + 28800000).toISOString();
-      }
+      Object.assign(nextState, createElectionWindow());
     }
     
-    await updateDoc(doc(firestore, 'system', 'electionState'), newState);
-    this.addLog(`Election State Updated`, `Status changed to ${newState.status || this.state.electionState.status}`, 'info');
+    await updateDoc(doc(firestore, 'system', 'electionState'), nextState);
+    this.state.electionState = { ...this.state.electionState, ...nextState };
+    this.notifyListeners();
+    this.addLog(`Election State Updated`, `Status changed to ${nextState.status || this.state.electionState.status}`, 'info');
   }
 
   // --- CANDIDATES ---
@@ -357,7 +339,7 @@ class DatabaseService {
   public async addLog(action: string, details: string, type: 'info' | 'success' | 'warning' | 'danger') {
     if (!firestore) return;
     const newDoc = doc(collection(firestore, 'logs'));
-    await setDoc(newDoc, { id: newDoc.id, action, details, timestamp: new Date().toISOString(), type });
+    await setDoc(newDoc, { id: newDoc.id, action, details, timestamp: serverTimestamp(), type });
   }
 
   // --- BULK UPLOAD ---
@@ -412,8 +394,7 @@ class DatabaseService {
     this.state.votes.forEach(v => batch.delete(doc(firestore, 'votes', v.id)));
     batch.update(doc(firestore, 'system', 'electionState'), { 
       status: 'active', 
-      startTime: new Date().toISOString(),
-      endTime: new Date(Date.now() + 28800000).toISOString() // Reset endTime to 8 hours from now
+      ...createElectionWindow()
     });
     await batch.commit();
     this.addLog('Election Reset', 'All votes cleared.', 'warning');

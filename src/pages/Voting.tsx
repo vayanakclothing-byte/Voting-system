@@ -19,18 +19,17 @@ export const Voting: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // Redirect if no active student session or election ended
+  // Redirect if there is no active student session or the election is locked.
   useEffect(() => {
     if (!currentStudent) {
       navigate('/');
       return;
     }
-    const isEnded = electionState.status !== 'active' || (electionState.endTime && Date.now() >= new Date(electionState.endTime).getTime());
-    if (isEnded) {
+    if (electionState.status !== 'active') {
       logoutStudent();
       navigate('/');
     }
-  }, [currentStudent, electionState.status, electionState.endTime, navigate, logoutStudent]);
+  }, [currentStudent, electionState.status, navigate, logoutStudent]);
 
   // Selections: { 'Head Boy': candidateId, ... }
   const [selections, setSelections] = useState<{ [position: string]: string }>(() => {
