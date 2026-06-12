@@ -2,11 +2,17 @@ import { Student, Teacher, Candidate, Vote, ElectionState, ActivityLog, HouseCol
 import { firestore } from './firebase';
 import { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, writeBatch, runTransaction, query, orderBy, limit, where, increment } from 'firebase/firestore';
 
+const ELECTION_DURATION_MS = 8 * 60 * 60 * 1000;
+
+const createElectionWindow = () => ({
+  startTime: new Date().toISOString(),
+  endTime: new Date(Date.now() + ELECTION_DURATION_MS).toISOString()
+});
+
 const DEFAULT_ELECTION_STATE: ElectionState = {
   status: 'active',
   allowManualTyping: true,
-  startTime: new Date().toISOString(),
-  endTime: new Date(Date.now() + 28800000).toISOString(),
+  ...createElectionWindow(),
   announcement: 'Welcome to the Royal Academy Student Council Election 2083!',
   voiceAnnouncements: true
 };
@@ -107,21 +113,18 @@ class DatabaseService {
   public async updateElectionState(newState: Partial<ElectionState>) {
     if (!firestore) return;
     
-    // If setting status to active, ensure endTime is in the future
+    const nextState = { ...newState };
+
+    // Starting an election should always create a fresh voting window. Otherwise a
+    // previously expired endTime can make another open tab auto-complete it again.
     if (newState.status === 'active') {
-      const currentEndTime = newState.endTime || this.state.electionState.endTime;
-      if (currentEndTime) {
-        const end = new Date(currentEndTime).getTime();
-        if (isNaN(end) || Date.now() >= end) {
-          newState.endTime = new Date(Date.now() + 28800000).toISOString(); // 8 hours default
-        }
-      } else {
-        newState.endTime = new Date(Date.now() + 28800000).toISOString();
-      }
+      Object.assign(nextState, createElectionWindow());
     }
     
-    await updateDoc(doc(firestore, 'system', 'electionState'), newState);
-    this.addLog(`Election State Updated`, `Status changed to ${newState.status || this.state.electionState.status}`, 'info');
+    await updateDoc(doc(firestore, 'system', 'electionState'), nextState);
+    this.state.electionState = { ...this.state.electionState, ...nextState };
+    this.notifyListeners();
+    this.addLog(`Election State Updated`, `Status changed to ${nextState.status || this.state.electionState.status}`, 'info');
   }
 
   // --- CANDIDATES ---
@@ -397,8 +400,7 @@ class DatabaseService {
     this.state.votes.forEach(v => batch.delete(doc(firestore, 'votes', v.id)));
     batch.update(doc(firestore, 'system', 'electionState'), { 
       status: 'active', 
-      startTime: new Date().toISOString(),
-      endTime: new Date(Date.now() + 28800000).toISOString() // Reset endTime to 8 hours from now
+      ...createElectionWindow()
     });
     await batch.commit();
     this.addLog('Election Reset', 'All votes cleared.', 'warning');
