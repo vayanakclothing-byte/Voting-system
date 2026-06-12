@@ -105,28 +105,30 @@ export const CampaignPosters: React.FC = () => {
   });
 
   return (
-    <section className="py-12 px-4 md:px-8 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-        <div>
+    <section className="py-12 px-4 md:px-8 max-w-7xl mx-auto overflow-hidden">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 w-full">
+        <div className="w-full min-w-0">
           <div className="flex items-center gap-2 text-indigo-400 mb-1">
             <FaBullhorn />
             <span className="text-xs font-bold uppercase tracking-wider">Interactive Gallery</span>
           </div>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Candidate Campaign Posters</h2>
-          <p className="text-xs md:text-sm text-slate-400">Explore the manifestos, slogans, and campaign promises of our student leaders.</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight break-words">Candidate Campaign Posters</h2>
+          <p className="text-xs md:text-sm text-slate-400 break-words">Explore the manifestos, slogans, and campaign promises of our student leaders.</p>
         </div>
 
         {/* House Filter Tabs */}
-        <div className="flex items-center gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 w-full md:w-auto overflow-x-auto">
-          {houses.map(house => (
-            <button
-              key={house}
-              onClick={() => setFilterHouse(house)}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${filterHouse === house ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
-            >
-              {house} {house !== 'All' && 'House'}
-            </button>
-          ))}
+        <div className="w-full md:w-auto overflow-x-auto pb-2 -mb-2 scrollbar-hide">
+          <div className="flex items-center gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 w-max md:w-auto">
+            {houses.map(house => (
+              <button
+                key={house}
+                onClick={() => setFilterHouse(house)}
+                className={`px-4 py-2 md:py-1.5 rounded-xl text-xs md:text-sm font-bold transition-all shrink-0 ${filterHouse === house ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+              >
+                {house} {house !== 'All' && 'House'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -136,45 +138,45 @@ export const CampaignPosters: React.FC = () => {
           <motion.div
             key={candidate.id}
             whileHover={{ y: -6 }}
-            className={`glass-panel rounded-3xl overflow-hidden border group cursor-pointer flex flex-col justify-between shadow-xl ${getCardStyle(candidate.house, candidate.position)}`}
+            className={`glass-panel rounded-3xl overflow-hidden border group cursor-pointer flex flex-col justify-between shadow-xl active:scale-[0.98] transition-transform ${getCardStyle(candidate.house, candidate.position)}`}
             onClick={() => setSelectedPoster(candidate.id)}
           >
-            <div className="h-64 overflow-hidden relative bg-slate-900">
+            <div className="aspect-[4/3] sm:h-64 sm:aspect-auto overflow-hidden relative bg-slate-900">
               <img
                 src={candidate.photoUrl}
                 alt={candidate.name}
                 loading="lazy"
-                className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
+                className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
 
               {/* Symbol Badge */}
-              <div className="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md w-10 h-10 rounded-xl border border-slate-700 flex items-center justify-center text-xl shadow-lg">
+              <div className="absolute top-4 left-4 bg-slate-900/90 backdrop-blur-md w-12 h-12 md:w-10 md:h-10 rounded-xl border border-slate-700 flex items-center justify-center text-2xl md:text-xl shadow-2xl">
                 {candidate.symbol}
               </div>
 
               {/* Position Tag */}
-              <div className="absolute bottom-3 left-3 bg-indigo-600 text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-lg shadow-lg">
+              <div className="absolute bottom-4 left-4 bg-indigo-600 text-white text-[11px] md:text-[10px] font-extrabold uppercase tracking-wider px-3.5 py-1.5 md:px-3 md:py-1 rounded-lg shadow-xl">
                 {candidate.position}
               </div>
             </div>
 
-            <div className="p-5 flex-1 flex flex-col justify-between bg-slate-950/40">
+            <div className="p-6 md:p-5 flex-1 flex flex-col justify-between bg-slate-950/40">
               <div>
-                <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">
+                <div className="text-xs md:text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-1">
                   {candidate.house} House Candidate
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors">
+                <h3 className="text-xl md:text-lg font-bold text-white mb-3 md:mb-2 group-hover:text-indigo-400 transition-colors drop-shadow-sm">
                   {candidate.name}
                 </h3>
-                <p className="text-xs text-slate-300 italic line-clamp-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                <p className="text-sm md:text-xs text-slate-200 md:text-slate-300 italic line-clamp-3 md:line-clamp-2 bg-slate-900/60 p-3 md:p-2.5 rounded-xl border border-slate-800 border-l-2 border-l-indigo-500 shadow-sm">
                   "{candidate.slogan}"
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-indigo-400 font-semibold group-hover:translate-x-1 transition-transform">
+              <div className="mt-5 md:mt-4 pt-4 md:pt-3 border-t border-slate-800/80 flex items-center justify-between text-sm md:text-xs text-indigo-400 font-bold group-hover:translate-x-1 transition-transform">
                 <span>View Full Manifesto</span>
-                <span>→</span>
+                <span className="text-lg md:text-base leading-none">&rarr;</span>
               </div>
             </div>
           </motion.div>
