@@ -69,13 +69,12 @@ export const Login: React.FC = () => {
     fetchStudents();
   }, [selectedClass, role, teachers]);
 
-  // Issue 7: Clear stale sessions on mount if election is not active or has ended
+  // Clear stale sessions when the shared election status is not active.
   useEffect(() => {
-    const isEnded = electionState.status !== 'active' || (electionState.endTime && Date.now() >= new Date(electionState.endTime).getTime());
-    if (isEnded && currentStudent) {
+    if (electionState.status !== 'active' && currentStudent) {
       logoutStudent();
     }
-  }, [electionState.status, electionState.endTime, currentStudent, logoutStudent]);
+  }, [electionState.status, currentStudent, logoutStudent]);
 
 
   // Filter students based on section
