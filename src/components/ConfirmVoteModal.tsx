@@ -35,10 +35,10 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="glass-panel bg-slate-900/95 border border-slate-700/80 rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl shadow-indigo-500/10 relative overflow-hidden"
+          className="glass-panel bg-slate-900/95 border border-slate-700/80 rounded-3xl max-w-xl w-full p-4 sm:p-6 md:p-8 shadow-2xl shadow-indigo-500/10 relative overflow-hidden flex flex-col max-h-[95vh]"
         >
           {/* Header */}
-          <div className="flex items-center gap-3 pb-4 border-b border-slate-800 mb-6">
+          <div className="flex items-center gap-3 pb-4 border-b border-slate-800 mb-4 sm:mb-6 shrink-0">
             <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30 text-2xl shrink-0">
               <FaExclamationTriangle />
             </div>
@@ -57,7 +57,7 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
 
           {/* Student Info Summary */}
           {currentStudent && (
-            <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 mb-6 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
               <div>
                 <span className="text-slate-400">Voter: </span>
                 <span className="font-bold text-white">{currentStudent.name}</span>
@@ -74,7 +74,7 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
           )}
 
           {/* Selections List */}
-          <div className="space-y-3 mb-8 max-h-[50vh] overflow-y-auto pr-2">
+          <div className="space-y-3 mb-4 sm:mb-8 overflow-y-auto pr-2 flex-1 min-h-[30vh]">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 sticky top-0 bg-slate-900/95 py-1 z-10">Your Chosen Candidates:</h3>
             {races.map(race => {
               const candidateId = selections[race.id];
@@ -105,7 +105,7 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
           </div>
 
           {/* Warning Note */}
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mb-8 flex items-start gap-3">
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mb-4 sm:mb-8 flex items-start gap-3 shrink-0">
             <FaCheckCircle className="text-amber-400 text-lg shrink-0 mt-0.5" />
             <p className="text-xs text-amber-200/90 leading-relaxed">
               <strong>Security Notice:</strong> By clicking confirm, your choices will be securely encrypted and recorded in the lab database. Your voting session will be locked immediately to prevent duplicate submissions.
@@ -113,14 +113,14 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 shrink-0">
             <button
               type="button"
               id="confirm-modal-btn-back"
               aria-label="Return to candidate selection"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm transition-all border border-slate-700 disabled:opacity-50"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm transition-all border border-slate-700 disabled:opacity-50"
             >
               Back to Editing
             </button>
@@ -130,7 +130,7 @@ export const ConfirmVoteModal: React.FC<ConfirmVoteModalProps> = ({ isOpen, onCl
               aria-label="Confirm choices and cast final ballot"
               onClick={handleFinalConfirm}
               disabled={isSubmitting}
-              className="px-8 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-2 disabled:opacity-50 border border-emerald-400/30"
+              className="w-full sm:w-auto px-8 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 border border-emerald-400/30"
             >
               {isSubmitting ? (
                 <>
