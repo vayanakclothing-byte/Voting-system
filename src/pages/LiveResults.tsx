@@ -37,11 +37,15 @@ export const LiveResults: React.FC = () => {
     candidates.forEach(c => { counts[c.id] = 0; });
     votes.forEach(v => {
       if (v.votedCandidates) {
-        Object.values(v.votedCandidates).forEach(candId => {
-          if (counts[candId] !== undefined) {
-            counts[candId]++;
-          } else {
-            counts[candId] = 1;
+        // Use a Set to ensure a candidate can only receive a maximum of 1 vote per ballot
+        const uniqueCandIds = new Set(Object.values(v.votedCandidates));
+        uniqueCandIds.forEach(candId => {
+          if (typeof candId === 'string') {
+            if (counts[candId] !== undefined) {
+              counts[candId]++;
+            } else {
+              counts[candId] = 1;
+            }
           }
         });
       }

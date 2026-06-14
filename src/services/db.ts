@@ -275,39 +275,47 @@ class DatabaseService {
           expectedPositions.push(...HOUSE_POSITIONS);
         }
         
-        const votedPositionKeys = Object.keys(votedCandidates);
-        
-        // We no longer strictly enforce all positions at the DB level 
-        // because the UI allows proceeding with an incomplete ballot (e.g. if no candidates are registered)
-        
-        if (studentId.startsWith('manual_')) {
-          isManual = true;
-        } else {
-          personRef = doc(firestore, collectionName, studentId);
-          const personDoc = await transaction.get(personRef);
-          if (personDoc.exists() && personDoc.data().hasVoted) {
-            throw new Error('ALREADY_VOTED');
+        // --- SECURE SANITIZATION CODE ---
+        const sanitizedVotedCandidates: { [position: string]: string } = {};
+        for (const key of Object.keys(votedCandidates)) {
+          if (expectedPositions.includes(key) && votedCandidates[key]) {
+            sanitizedVotedCandidates[key] = votedCandidates[key];
           }
+        }
+
+        // Prevent a user from voting for the same candidate multiple times
+        const uniqueCandidateIds = new Set(Object.values(sanitizedVotedCandidates));
+        if (uniqueCandidateIds.size !== Object.keys(sanitizedVotedCandidates).length) {
+            throw new Error('DUPLICATE_CANDIDATE_VOTE');
+        }
+
+        personRef = doc(firestore, collectionName, studentId);
+        const personDoc = await transaction.get(personRef);
+
+        if (personDoc.exists()) {
+            if (personDoc.data().hasVoted) {
+                throw new Error('ALREADY_VOTED');
+            }
+            transaction.update(personRef, { hasVoted: true, votedAt: timestamp });
+        } else {
+            if (!studentId.startsWith('manual_')) {
+                throw new Error('STUDENT_NOT_FOUND');
+            }
+            transaction.set(personRef, { id: personRef.id, name: studentName, className, hasVoted: true, votedAt: timestamp });
         }
 
         const timestamp = new Date().toISOString();
 
         // Register the vote
         const voteRef = doc(collection(firestore, 'votes'));
-        transaction.set(voteRef, { id: voteRef.id, studentId, studentName, className, house, votedCandidates, timestamp });
-
-        // Mark person as voted
-        if (!isManual && personRef) {
-          transaction.update(personRef, { hasVoted: true, votedAt: timestamp });
-        } else if (isManual) {
-          const newPersonRef = doc(collection(firestore, collectionName));
-          transaction.set(newPersonRef, { id: newPersonRef.id, name: studentName, className, hasVoted: true, votedAt: timestamp });
-        }
+        transaction.set(voteRef, { id: voteRef.id, studentId, studentName, className, house, votedCandidates: sanitizedVotedCandidates, timestamp });
 
         // Increment candidates safely
-        for (const pos of Object.keys(votedCandidates)) {
-          const candId = votedCandidates[pos];
+        for (const pos of Object.keys(sanitizedVotedCandidates)) {
+          const candId = sanitizedVotedCandidates[pos];
+          if (!candId) continue;
           const candRef = doc(firestore, 'candidates', candId);
+          // If a candId is invalid, transaction.update will fail and revert the vote, acting as extra security
           transaction.update(candRef, { votesCount: increment(1) });
         }
       });

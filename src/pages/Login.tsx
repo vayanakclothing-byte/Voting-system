@@ -160,11 +160,17 @@ export const Login: React.FC = () => {
     }
 
     // Verify session login
+    const studentNameFormatted = studentNameInput.trim();
+    const studentClassFormatted = role === 'teacher' ? 'Teacher' : selectedClass;
+    
+    // Generate a deterministic ID for manual entry so the user cannot double-vote
+    const deterministicId = `manual_${studentClassFormatted}_${studentNameFormatted}`.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+
     const success = loginStudent({
-      name: matchedStudent ? matchedStudent.name : studentNameInput.trim(),
-      className: role === 'teacher' ? 'Teacher' : selectedClass,
+      name: matchedStudent ? matchedStudent.name : studentNameFormatted,
+      className: studentClassFormatted,
       house: role === 'teacher' ? 'Teacher' : (houseInput as HouseColor),
-      id: matchedStudent?.id || `manual_${Date.now()}`,
+      id: matchedStudent?.id || deterministicId,
       isTeacher: role === 'teacher'
     });
 
