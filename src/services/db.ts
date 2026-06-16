@@ -289,6 +289,8 @@ class DatabaseService {
             throw new Error('DUPLICATE_CANDIDATE_VOTE');
         }
 
+        const timestamp = new Date().toISOString();
+
         personRef = doc(firestore, collectionName, studentId);
         const personDoc = await transaction.get(personRef);
 
@@ -303,8 +305,6 @@ class DatabaseService {
             }
             transaction.set(personRef, { id: personRef.id, name: studentName, className, hasVoted: true, votedAt: timestamp });
         }
-
-        const timestamp = new Date().toISOString();
 
         // Register the vote
         const voteRef = doc(collection(firestore, 'votes'));
