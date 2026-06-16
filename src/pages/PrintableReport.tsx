@@ -2,9 +2,11 @@ import React, { useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { db } from '../services/db';
 import { GLOBAL_POSITIONS, HOUSE_POSITIONS } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 export const PrintableReport: React.FC = () => {
   const { candidates, students, votes, refreshData } = useApp();
+  const navigate = useNavigate();
 
   // Load data immediately
   useEffect(() => {
@@ -202,9 +204,10 @@ export const PrintableReport: React.FC = () => {
 
       {/* Print Instructions - Visible only on screen */}
       <div className="fixed bottom-4 right-4 print:hidden bg-blue-100 text-blue-800 px-4 py-3 rounded-lg shadow-lg max-w-sm text-sm border border-blue-200">
-        <p className="font-bold mb-1">Print Mode Active</p>
-        <p>If the print dialog didn't open automatically, press <strong>Ctrl+P</strong> (or <strong>Cmd+P</strong>) to print or save this report as a PDF.</p>
-        <button onClick={() => window.close()} className="mt-3 bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold w-full hover:bg-blue-700">Close Tab</button>
+        <p className="font-bold mb-1">PDF Report Ready</p>
+        <p>Choose Print / Save PDF, then select <strong>Save as PDF</strong> in the print window.</p>
+        <button onClick={() => window.print()} className="mt-3 bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold w-full hover:bg-blue-700">Print / Save PDF</button>
+        <button onClick={() => navigate('/results')} className="mt-2 bg-white text-blue-700 px-3 py-1.5 rounded text-xs font-bold w-full hover:bg-blue-50 border border-blue-200">Back to Results</button>
       </div>
 
       {/* Hide navbar globally via print media query just in case */}

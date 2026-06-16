@@ -29,6 +29,7 @@ interface AppContextType {
   // Sessions
   currentStudent: StudentSession | null;
   isAdminLoggedIn: boolean;
+  isAuthReady: boolean;
   selectedHouse: HouseColor | 'Teacher' | null;
 
   // UI States
@@ -66,6 +67,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
+  const [isAuthReady, setIsAuthReady] = useState<boolean>(!auth);
 
   const [selectedHouse, setSelectedHouse] = useState<HouseColor | 'Teacher' | null>(() => {
     return currentStudent ? currentStudent.house : null;
@@ -120,6 +122,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     const unsubscribeAuth = auth ? onAuthStateChanged(auth, (user) => {
       setIsAdminLoggedIn(!!user);
+      setIsAuthReady(true);
     }) : () => {};
 
     return () => {
@@ -255,6 +258,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         electionState,
         currentStudent,
         isAdminLoggedIn,
+        isAuthReady,
         selectedHouse,
         isFullscreen,
         isDarkMode,

@@ -204,7 +204,7 @@ export const LiveResults: React.FC = () => {
 
             {/* Export PDF Report */}
             <button
-              onClick={() => window.open('/print-report', '_blank')}
+              onClick={() => navigate('/print-report')}
               className="w-full md:w-auto px-5 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-all border bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 border-indigo-400/30"
               title="Open Official Printable Report"
             >

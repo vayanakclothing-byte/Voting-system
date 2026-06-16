@@ -7,7 +7,15 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAdminLoggedIn } = useApp();
+  const { isAdminLoggedIn, isAuthReady } = useApp();
+
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center text-indigo-500 font-bold text-sm tracking-widest uppercase animate-pulse">
+        Checking Admin Access...
+      </div>
+    );
+  }
 
   if (!isAdminLoggedIn) {
     return <Navigate to="/admin-login" replace />;
